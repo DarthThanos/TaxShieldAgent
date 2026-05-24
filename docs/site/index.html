@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hive Intelligence — AI-Powered Tools for Business &amp; Health</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #080d14;
+      --surface:  #0f1a2b;
+      --border:   #1e3048;
+      --muted:    #3d5a7a;
+      --text:     #cdd8e8;
+      --bright:   #f0f6ff;
+      --tax-a:    #6366f1;
+      --tax-b:    #8b5cf6;
+      --hsa-a:    #06b6d4;
+      --hsa-b:    #0ea5e9;
+      --gold:     #f59e0b;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(8,13,20,0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 2.5rem;
+    }
+    .nav-brand {
+      display: flex; align-items: center; gap: 0.6rem;
+      text-decoration: none;
+    }
+    .nav-logo {
+      width: 36px; height: 36px;
+      background: linear-gradient(135deg, var(--tax-a), var(--hsa-b));
+      border-radius: 9px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 0.85rem; color: #fff; letter-spacing: -0.5px;
+    }
+    .nav-brand span { font-weight: 700; font-size: 1.05rem; color: var(--bright); }
+    .nav-links { display: flex; align-items: center; gap: 2rem; }
+    .nav-links a {
+      color: var(--text); text-decoration: none; font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--bright); }
+    .nav-cta {
+      background: linear-gradient(135deg, var(--tax-a), var(--hsa-b));
+      color: #fff !important;
+      padding: 0.5rem 1.2rem; border-radius: 8px; font-weight: 600 !important;
+    }
+    .nav-cta:hover { opacity: 0.9; }
+
+    /* ── HERO ── */
+    .hero {
+      max-width: 760px; margin: 0 auto;
+      padding: 7rem 1.5rem 5rem;
+      text-align: center;
+    }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(99,102,241,0.12); border: 1px solid rgba(99,102,241,0.3);
+      border-radius: 999px; padding: 0.35rem 1rem;
+      font-size: 0.78rem; font-weight: 600; color: #a5b4fc;
+      margin-bottom: 1.75rem; letter-spacing: 0.04em; text-transform: uppercase;
+    }
+    .pulse {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #6ee7b7;
+      box-shadow: 0 0 0 0 rgba(110,231,183,0.6);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%   { box-shadow: 0 0 0 0   rgba(110,231,183,0.6); }
+      70%  { box-shadow: 0 0 0 8px rgba(110,231,183,0);   }
+      100% { box-shadow: 0 0 0 0   rgba(110,231,183,0);   }
+    }
+    .hero h1 {
+      font-size: clamp(2.2rem, 5vw, 3.4rem);
+      font-weight: 800; color: var(--bright);
+      line-height: 1.15; margin-bottom: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+    .hero h1 .grad {
+      background: linear-gradient(90deg, var(--tax-a), var(--hsa-b));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .hero p {
+      font-size: 1.1rem; color: #7a9bbf;
+      line-height: 1.75; max-width: 560px; margin: 0 auto 2.5rem;
+    }
+    .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── BUTTONS ── */
+    .btn {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      padding: 0.8rem 1.75rem; border-radius: 10px;
+      font-weight: 600; font-size: 0.95rem; text-decoration: none;
+      transition: all 0.2s;
+    }
+    .btn-tax {
+      background: linear-gradient(135deg, var(--tax-a), var(--tax-b));
+      color: #fff;
+    }
+    .btn-tax:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(99,102,241,0.35); }
+    .btn-hsa {
+      background: linear-gradient(135deg, var(--hsa-a), var(--hsa-b));
+      color: #fff;
+    }
+    .btn-hsa:hover { transform: translateY(-1px); box-shadow: 0 8px 24px rgba(6,182,212,0.35); }
+    .btn-ghost {
+      background: transparent; border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .btn-ghost:hover { border-color: var(--muted); color: var(--bright); }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      text-align: center; margin-bottom: 1rem;
+      font-size: 0.75rem; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--muted);
+    }
+    .section-title {
+      text-align: center; font-size: clamp(1.6rem, 3vw, 2rem);
+      font-weight: 800; color: var(--bright); margin-bottom: 0.75rem;
+    }
+    .section-sub {
+      text-align: center; color: #7a9bbf; font-size: 0.95rem;
+      max-width: 480px; margin: 0 auto 3.5rem;
+    }
+
+    /* ── PRODUCT CARDS ── */
+    .products {
+      max-width: 1060px; margin: 0 auto;
+      padding: 5rem 1.5rem;
+    }
+    .product-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(460px, 1fr));
+      gap: 1.5rem;
+    }
+    .product-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2.25rem;
+      display: flex; flex-direction: column; gap: 1.5rem;
+      transition: border-color 0.2s, transform 0.2s;
+    }
+    .product-card:hover { transform: translateY(-2px); }
+    .product-card.tax { border-top: 3px solid var(--tax-a); }
+    .product-card.hsa { border-top: 3px solid var(--hsa-a); }
+    .product-card:hover.tax { border-color: var(--tax-a); }
+    .product-card:hover.hsa { border-color: var(--hsa-a); }
+
+    .product-header { display: flex; align-items: center; gap: 1rem; }
+    .product-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-weight: 900; font-size: 1.1rem; color: #fff; flex-shrink: 0;
+    }
+    .product-icon.tax { background: linear-gradient(135deg, var(--tax-a), var(--tax-b)); }
+    .product-icon.hsa { background: linear-gradient(135deg, var(--hsa-a), var(--hsa-b)); }
+    .product-title { font-size: 1.25rem; font-weight: 700; color: var(--bright); }
+    .product-tagline { font-size: 0.85rem; color: var(--muted); margin-top: 0.2rem; }
+
+    .product-desc { color: #7a9bbf; font-size: 0.92rem; line-height: 1.7; }
+
+    .product-features { display: flex; flex-direction: column; gap: 0.55rem; }
+    .feature-item {
+      display: flex; align-items: flex-start; gap: 0.6rem;
+      font-size: 0.875rem; color: var(--text);
+    }
+    .feature-check { font-size: 0.8rem; margin-top: 0.1rem; flex-shrink: 0; }
+    .feature-check.tax { color: #818cf8; }
+    .feature-check.hsa { color: #22d3ee; }
+
+    .product-footer {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+      padding-top: 1rem; border-top: 1px solid var(--border);
+    }
+    .product-price { font-size: 0.85rem; color: var(--muted); }
+    .product-price strong { color: var(--bright); font-size: 1rem; }
+
+    /* ── TRUST BAR ── */
+    .trust {
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      padding: 1.25rem 2rem;
+    }
+    .trust-inner {
+      max-width: 900px; margin: 0 auto;
+      display: flex; align-items: center; justify-content: center;
+      gap: 2.5rem; flex-wrap: wrap;
+    }
+    .trust-item {
+      display: flex; align-items: center; gap: 0.5rem;
+      font-size: 0.82rem; color: var(--muted); font-weight: 500;
+    }
+    .trust-item .icon { font-size: 1rem; }
+
+    /* ── FOOTER ── */
+    footer {
+      max-width: 900px; margin: 0 auto;
+      padding: 3rem 1.5rem;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem;
+    }
+    .footer-brand { font-size: 0.85rem; color: var(--muted); }
+    .footer-brand strong { color: var(--text); }
+    .footer-links { display: flex; gap: 1.5rem; flex-wrap: wrap; }
+    .footer-links a {
+      font-size: 0.82rem; color: var(--muted); text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    @media (max-width: 600px) {
+      nav { padding: 1rem 1.25rem; }
+      .nav-links { display: none; }
+      .product-grid { grid-template-columns: 1fr; }
+      footer { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-brand" href="/">
+    <div class="nav-logo">HI</div>
+    <span>Hive Intelligence</span>
+  </a>
+  <div class="nav-links">
+    <a href="#products">Products</a>
+    <a href="/privacy">Privacy</a>
+    <a href="/terms">Terms</a>
+    <a href="mailto:support@taxshieldagent.com">Support</a>
+    <a class="nav-cta" href="#products">Get Started →</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">
+    <span class="pulse"></span>
+    AI-Powered Tools — Live Now
+  </div>
+  <h1>One suite.<br><span class="grad">Two powerful agents.</span></h1>
+  <p>
+    Automate your tax compliance. Optimize your health benefits.
+    Hive Intelligence puts enterprise-grade AI to work for your business and your wellbeing.
+  </p>
+  <div class="hero-actions">
+    <a class="btn btn-tax" href="https://marketplace.stripe.com/apps/taxshieldagent">TaxShield — Install Free →</a>
+    <a class="btn btn-hsa" href="https://trinity.yourdomain.com">Trinity HSA — Try Now →</a>
+  </div>
+</section>
+
+<!-- TRUST BAR -->
+<div class="trust">
+  <div class="trust-inner">
+    <div class="trust-item"><span class="icon">🔒</span> HTTPS Encrypted</div>
+    <div class="trust-item"><span class="icon">⚡</span> Powered by Claude AI</div>
+    <div class="trust-item"><span class="icon">💳</span> Stripe Verified</div>
+    <div class="trust-item"><span class="icon">🇺🇸</span> US-Based &amp; Compliant</div>
+    <div class="trust-item"><span class="icon">🛡️</span> Data Isolated Per User</div>
+  </div>
+</div>
+
+<!-- PRODUCTS -->
+<section class="products" id="products">
+  <p class="section-label">Choose your tool</p>
+  <h2 class="section-title">Two agents. One platform.</h2>
+  <p class="section-sub">Each app is purpose-built, independently deployable, and backed by the same infrastructure.</p>
+
+  <div class="product-grid">
+
+    <!-- TaxShieldAgent -->
+    <div class="product-card tax">
+      <div class="product-header">
+        <div class="product-icon tax">TS</div>
+        <div>
+          <div class="product-title">TaxShieldAgent</div>
+          <div class="product-tagline">US Sales Tax Nexus Monitor for Stripe</div>
+        </div>
+      </div>
+      <p class="product-desc">
+        Monitor your Stripe transactions across all 50 US states. Get alerted before you cross
+        an Economic Nexus threshold and register for compliance in one click — for just $1 per state.
+      </p>
+      <div class="product-features">
+        <div class="feature-item">
+          <span class="feature-check tax">✦</span>
+          All 50 states tracked — every threshold, every rule
+        </div>
+        <div class="feature-item">
+          <span class="feature-check tax">✦</span>
+          One-click tax registration via Stripe Tax
+        </div>
+        <div class="feature-item">
+          <span class="feature-check tax">✦</span>
+          Multi-platform: Stripe, Shopify, Etsy, PayPal, Square, Amazon
+        </div>
+        <div class="feature-item">
+          <span class="feature-check tax">✦</span>
+          AI compliance explanations in plain English
+        </div>
+        <div class="feature-item">
+          <span class="feature-check tax">✦</span>
+          Immutable audit log — export any time
+        </div>
+      </div>
+      <div class="product-footer">
+        <div class="product-price">From <strong>Free</strong> · $1 per registration</div>
+        <a class="btn btn-tax" href="https://marketplace.stripe.com/apps/taxshieldagent">Install on Stripe →</a>
+      </div>
+    </div>
+
+    <!-- Trinity HSA -->
+    <div class="product-card hsa">
+      <div class="product-header">
+        <div class="product-icon hsa">TR</div>
+        <div>
+          <div class="product-title">Trinity HSA Agent</div>
+          <div class="product-tagline">AI-Powered HSA Optimization &amp; Health Intelligence</div>
+        </div>
+      </div>
+      <p class="product-desc">
+        Your personal AI health benefits advisor. Trinity analyzes your HSA, answers Medicare and
+        supplement questions, and delivers real-time health intelligence — all in a private, streaming conversation.
+      </p>
+      <div class="product-features">
+        <div class="feature-item">
+          <span class="feature-check hsa">✦</span>
+          Live AI chat — no waiting, streaming responses
+        </div>
+        <div class="feature-item">
+          <span class="feature-check hsa">✦</span>
+          HSA rules, limits, and optimization strategies
+        </div>
+        <div class="feature-item">
+          <span class="feature-check hsa">✦</span>
+          Medicare &amp; supplement plan intelligence
+        </div>
+        <div class="feature-item">
+          <span class="feature-check hsa">✦</span>
+          Web-grounded answers via real-time search
+        </div>
+        <div class="feature-item">
+          <span class="feature-check hsa">✦</span>
+          Persistent memory — it knows your profile
+        </div>
+      </div>
+      <div class="product-footer">
+        <div class="product-price">From <strong>Free</strong> · Pro plans available</div>
+        <a class="btn btn-hsa" href="https://trinity.yourdomain.com">Open Trinity →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-brand">
+    &copy; 2026 <strong>Hive Intelligence</strong> — All rights reserved
+  </div>
+  <div class="footer-links">
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms of Service</a>
+    <a href="mailto:support@taxshieldagent.com">Support</a>
+  </div>
+</footer>
+
+</body>
+</html>

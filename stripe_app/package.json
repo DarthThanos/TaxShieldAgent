@@ -1,0 +1,19 @@
+{
+  "name": "taxshieldagent-stripe-app",
+  "version": "0.4.2",
+  "description": "TaxShieldAgent — US Sales Tax Nexus Monitoring for Stripe merchants",
+  "scripts": {
+    "start": "stripe apps start",
+    "build": "stripe apps build",
+    "validate": "stripe apps validate",
+    "upload": "stripe apps upload",
+    "lint": "eslint src"
+  },
+  "dependencies": {
+    "@stripe/ui-extension-sdk": "latest"
+  },
+  "devDependencies": {
+    "@types/react": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}

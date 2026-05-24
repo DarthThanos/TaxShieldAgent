@@ -1,0 +1,49 @@
+# ── Runtime data — private to your machine ────────────────────────
+data/
+*.db
+*.db-shm
+*.db-wal
+
+# ── Secrets — never ever ──────────────────────────────────────────
+.env
+.env.*
+secrets/
+docs/ALL_KEYS.txt
+docs/Claude_API_.txt
+docs/Restricted_key.txt
+docs/Secretkey.txt
+docs/TaxPublish_Key.txt
+docs/Test_Client_ID.txt
+docs/stripe_backup_code.txt
+
+# ── Node / JS noise ───────────────────────────────────────────────
+node_modules/
+.build/
+*.min.js
+*.min.js.map
+
+# ── Python noise ──────────────────────────────────────────────────
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# ── OS noise ──────────────────────────────────────────────────────
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# ── IDE noise ─────────────────────────────────────────────────────
+.vs/
+.idea/
+*.user
+
+# ── Logs ──────────────────────────────────────────────────────────
+*.log

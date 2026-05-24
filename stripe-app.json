@@ -1,0 +1,46 @@
+{
+  "$schema": "https://stripe.com/stripe-app.schema.json",
+  "id": "com.taxshieldagent.monitor",
+  "name": "TaxShieldAgent",
+  "version": "0.4.2",
+  "icon": "./icon.png",
+  "ui_extension": {
+    "views": [
+      {
+        "viewport": "stripe.dashboard.home.overview",
+        "component": "NexusOverview"
+      },
+      {
+        "viewport": "stripe.dashboard.payment.detail",
+        "component": "PaymentNexusDetail"
+      }
+    ],
+    "content_security_policy": {
+      "connect-src": [
+        "https://api.taxshieldagent.com/stripe-app/",
+        "https://api.taxshieldagent.com/nexus/"
+      ],
+      "purpose": "Connect to TaxShieldAgent backend API for nexus risk data and compliance actions"
+    }
+  },
+  "extensions": null,
+  "permissions": [
+    {
+      "permission": "payment_intent_read",
+      "purpose": "Read PaymentIntent metadata to extract the destination state for each transaction, enabling per-state sales aggregation and Economic Nexus threshold monitoring across all 50 US states."
+    },
+    {
+      "permission": "tax_settings_write",
+      "purpose": "Create Stripe Tax Registrations in US states when a merchant approves a compliance fix. Registration only occurs after explicit merchant confirmation — the app never acts autonomously."
+    },
+    {
+      "permission": "charge_write",
+      "purpose": "Apply a $1 application fee to the merchant's most recent charge when a state tax registration is successfully completed. This is the app's per-action monetisation fee."
+    }
+  ],
+  "post_install_action": {
+    "type": "external",
+    "url": "https://api.taxshieldagent.com/stripe-app/stripe-app-callback"
+  },
+  "distribution_type": "public"
+}
