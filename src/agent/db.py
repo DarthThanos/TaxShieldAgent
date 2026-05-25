@@ -106,6 +106,13 @@ class ShieldDB:
             )
         """)
         self.conn.execute("""
+            CREATE TABLE IF NOT EXISTS processed_webhook_events (
+                event_id    VARCHAR PRIMARY KEY,
+                event_type  VARCHAR,
+                processed_at TIMESTAMP
+            )
+        """)
+        self.conn.execute("""
             CREATE TABLE IF NOT EXISTS merchant_subscriptions (
                 id                      VARCHAR PRIMARY KEY,
                 merchant_id             VARCHAR UNIQUE,
@@ -371,6 +378,28 @@ class ShieldDB:
             amount_cents=0,
             stripe_reg_id=None,
             confirmed_by=resolved_by,
+        )
+
+    # -- Webhook event dedup ----------------------------------------------
+
+    def is_webhook_event_processed(self, event_id: str) -> bool:
+        """Return True if this Stripe event_id was already handled."""
+        row = self.conn.execute(
+            "SELECT 1 FROM processed_webhook_events WHERE event_id = ?",
+            [event_id],
+        ).fetchone()
+        return row is not None
+
+    def mark_webhook_event_processed(self, event_id: str, event_type: str) -> None:
+        """Record a Stripe event_id as processed (idempotency guard)."""
+        now = datetime.now(timezone.utc)
+        self.conn.execute(
+            """
+            INSERT OR IGNORE INTO processed_webhook_events
+                (event_id, event_type, processed_at)
+            VALUES (?, ?, ?)
+            """,
+            [event_id, event_type, now],
         )
 
     def mark_alert_notified(self, alert_id: str) -> None:

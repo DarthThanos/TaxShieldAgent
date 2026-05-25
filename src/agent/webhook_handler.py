@@ -113,11 +113,20 @@ class WebhookProcessor:
             return {"status": "error", "processed": False, "event_type": "unknown"}
 
         event_type: str = event.type or "unknown"
+        event_id: str = event.id or ""
+
+        if event_id and self.db.is_webhook_event_processed(event_id):
+            logger.info("Skipping duplicate webhook event %s (%s)", event_id, event_type)
+            return {"status": "ok", "processed": False, "event_type": event_type, "duplicate": True}
 
         if event_type == "payment_intent.succeeded":
             self._handle_payment_intent_succeeded(event)
+            if event_id:
+                self.db.mark_webhook_event_processed(event_id, event_type)
             return {"status": "ok", "processed": True, "event_type": event_type}
 
+        if event_id:
+            self.db.mark_webhook_event_processed(event_id, event_type)
         logger.info("Ignoring unhandled event type: %s", event_type)
         return {"status": "ok", "processed": False, "event_type": event_type}
 
