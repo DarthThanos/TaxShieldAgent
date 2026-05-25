@@ -17,6 +17,13 @@ from contextlib import asynccontextmanager
 from typing import Any
 
 from pathlib import Path
+if _sentry_dsn := os.getenv("SENTRY_DSN"):
+    try:
+        import sentry_sdk
+        sentry_sdk.init(dsn=_sentry_dsn, traces_sample_rate=0.2)
+    except ImportError:
+        pass
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
