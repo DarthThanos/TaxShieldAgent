@@ -144,3 +144,24 @@ export function uploadAmazonCSV(merchantId, file) {
 export function disconnectPlatform(merchantId, platform) {
   return request(`/connectors/disconnect/${platform}`, { method: 'DELETE' });
 }
+
+// Audit
+export function getAuditLog() {
+  return request('/audit/');
+}
+
+export async function downloadCompliancePDF() {
+  const merchantId = import.meta.env.VITE_DEV_MERCHANT_ID || 'platform'
+  const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+  const res = await fetch(`${BASE_URL}/audit/export-pdf`, {
+    headers: { 'X-Stripe-Account': merchantId },
+  })
+  if (!res.ok) throw new Error(`PDF export failed: ${res.status}`)
+  const blob = await res.blob()
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `taxshield_compliance_${new Date().toISOString().slice(0,10)}.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
+}

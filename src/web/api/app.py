@@ -26,7 +26,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from src.agent.db import ShieldDB
-from src.web.api.routes import alerts, connectors, dashboard, stripe_app, subscriptions, webhooks
+from src.web.api.routes import alerts, audit, connectors, dashboard, stripe_app, subscriptions, webhooks
 
 logger = logging.getLogger(__name__)
 
@@ -88,6 +88,7 @@ app.add_middleware(
 
 app.include_router(webhooks.router)
 app.include_router(dashboard.router)
+app.include_router(audit.router)
 app.include_router(alerts.router)
 app.include_router(connectors.router)
 app.include_router(stripe_app.router)
