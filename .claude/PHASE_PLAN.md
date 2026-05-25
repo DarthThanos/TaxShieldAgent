@@ -79,13 +79,13 @@ full `tx_id` `INSERT OR REPLACE` path end to end.
 
 ## PHASE C — Experience (native look, fast onboarding) 🎨
 
-### C1. Replace inline styles with a design system ⬜
+### C1. Replace inline styles with a design system ✅
 **Problem:** Entire dashboard styled with inline `style={{}}` (`src/web/dashboard/src/App.jsx`, ~250
 lines). Unmaintainable, no theming, no clean hover/focus.
 **Fix:** Adopt token-based styling. Since target is the Stripe App Marketplace, prefer Stripe's UI Kit
 / design tokens so the embedded app feels native inside the Stripe Dashboard.
 
-### C2. First-run / empty / loading / offline states ⬜
+### C2. First-run / empty / loading / offline states ✅
 **Problem:** Merchant hardcoded to "platform"; only a binary online/offline dot.
 **Fix:** Onboarding wizard (connect Stripe → first sync → nexus map), skeleton loaders, empty states,
 graceful degraded states. Goal: merchant sees their real first state number in <60 seconds.
