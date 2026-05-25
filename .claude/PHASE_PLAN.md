@@ -37,7 +37,7 @@ signature verification in production (logs a CRITICAL and proceeds). `auth.py:35
 production. Reject unverified tokens.
 **Done when:** A forged token / arbitrary account_id is rejected with 401 in production.
 
-### A4. Fix CORS config ⬜
+### A4. Fix CORS config ✅
 **Problem:** `src/web/api/app.py:69` sets `allow_origins=["*"]` WITH `allow_credentials=True` — illegal
 per CORS spec; browsers reject it. Works today only because auth is header-based.
 **Fix:** Enumerate allowed origins, OR set `allow_credentials=False` while on header auth.
@@ -47,14 +47,14 @@ per CORS spec; browsers reject it. Works today only because auth is header-based
 
 ## PHASE B — Trust (don't lose/leak data; prove the math) 🟠
 
-### B1. Wire alert delivery (email first) ⬜
+### B1. Wire alert delivery (email first) ✅
 **Problem:** Generated alerts only go to `agent.log`. The merchant never sees them. The notification
 IS the product. `SENDGRID_API_KEY` referenced in OPERATIONS but unwired.
 **Fix:** Email delivery in the agent loop (Slack/webhook optional). Add a `notified_at` column to
 prevent re-sends.
 **Done when:** A new RED/CRITICAL alert reliably reaches the merchant once.
 
-### B2. Add automated tests ⬜
+### B2. Add automated tests ✅
 **Problem:** README advertises `tests/` but none committed. This product registers people for legal
 tax obligations — the nexus math must be regression-protected.
 **Fix:** Test `get_nexus_status` (`src/agent/db.py:182`) and `NexusEngine`: threshold boundaries
@@ -62,16 +62,16 @@ tax obligations — the nexus math must be regression-protected.
 rollover, escalation dedup.
 **Done when:** CI runs the suite green on every push.
 
-### B3. Stop committing node_modules ⬜
+### B3. Stop committing node_modules ✅
 **Problem:** `stripe_app/node_modules/**` is checked into git.
 **Fix:** Add to `.gitignore`; `git rm -r --cached stripe_app/node_modules`.
 **Done when:** Repo is clean; reviewers/acquirers see a lean tree.
 
-### B4. Observability ⬜
+### B4. Observability ✅
 **Fix:** Wire Sentry (or similar) for error tracking + basic uptime/latency alerts per OPERATIONS
 monitoring table. Don't run passive-income SaaS blind.
 
-### B5. Webhook idempotency / reliability ⬜
+### B5. Webhook idempotency / reliability ✅
 **Fix:** Ensure webhook ingestion is idempotent (Stripe retries) and survives restarts. Verify the
 full `tx_id` `INSERT OR REPLACE` path end to end.
 
