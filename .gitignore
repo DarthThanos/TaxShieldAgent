@@ -18,6 +18,7 @@ docs/stripe_backup_code.txt
 
 # ── Node / JS noise ───────────────────────────────────────────────
 node_modules/
+stripe_app/node_modules/
 .build/
 *.min.js
 *.min.js.map
