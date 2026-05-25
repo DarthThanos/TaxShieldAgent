@@ -66,12 +66,16 @@ _env = _get_environment()
 # Allow all origins — API uses header-based auth (X-Stripe-Account),
 # not cookies, so wildcard CORS is safe.  Stripe Apps run inside an
 # iframe whose origin varies, making a whitelist impractical.
-_origins = ["*"]
+_origins = (
+    os.getenv("CORS_ALLOWED_ORIGINS", "").split(",")
+    if os.getenv("CORS_ALLOWED_ORIGINS")
+    else ["*"]
+)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_origins,
-    allow_credentials=True,
+    allow_credentials=False,  # header-based auth, not cookies
     allow_methods=["*"],
     allow_headers=["*"],
 )
