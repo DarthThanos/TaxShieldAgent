@@ -26,12 +26,9 @@ from .notifier import send_alert_email
 
 load_dotenv(find_dotenv(usecwd=True), override=True)
 
+import sentry_sdk
 if _sentry_dsn := os.getenv("SENTRY_DSN"):
-    try:
-        import sentry_sdk
-        sentry_sdk.init(dsn=_sentry_dsn, traces_sample_rate=0.2)
-    except ImportError:
-        pass
+    sentry_sdk.init(dsn=_sentry_dsn, traces_sample_rate=0.2)
 
 logger = logging.getLogger("taxshieldagent")
 
