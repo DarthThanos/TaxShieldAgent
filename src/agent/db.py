@@ -82,9 +82,17 @@ class ShieldDB:
                 threshold_transactions INTEGER,
                 created_at            TIMESTAMP,
                 status                VARCHAR DEFAULT 'open',
-                resolved_at           TIMESTAMP
+                resolved_at           TIMESTAMP,
+                notified_at           TIMESTAMP
             )
         """)
+        # Migrate: add notified_at column if missing (existing DBs)
+        try:
+            self.conn.execute(
+                "ALTER TABLE nexus_alerts ADD COLUMN notified_at TIMESTAMP"
+            )
+        except duckdb.CatalogException:
+            pass  # column already exists
         self.conn.execute("""
             CREATE TABLE IF NOT EXISTS audit_log (
                 id                      VARCHAR PRIMARY KEY,
@@ -364,6 +372,28 @@ class ShieldDB:
             stripe_reg_id=None,
             confirmed_by=resolved_by,
         )
+
+    def mark_alert_notified(self, alert_id: str) -> None:
+        """Stamp notified_at so the same alert is never emailed twice."""
+        now = datetime.now(timezone.utc)
+        self.conn.execute(
+            "UPDATE nexus_alerts SET notified_at = ? WHERE id = ?",
+            [now, alert_id],
+        )
+
+    def get_open_alerts_unnotified(self, merchant_id: str) -> list[dict]:
+        """Return open alerts that have not yet been emailed."""
+        result = self.conn.execute(
+            """
+            SELECT *
+            FROM nexus_alerts
+            WHERE merchant_id = ? AND status = 'open' AND notified_at IS NULL
+            ORDER BY created_at DESC
+            """,
+            [merchant_id],
+        )
+        cols = [desc[0] for desc in result.description]
+        return [dict(zip(cols, row)) for row in result.fetchall()]
 
     # -- Audit log --------------------------------------------------------
 

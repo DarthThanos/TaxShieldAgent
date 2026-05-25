@@ -22,6 +22,7 @@ from dotenv import load_dotenv, find_dotenv
 from .claude_agent import ComplianceAgent
 from .db import ShieldDB
 from .nexus_engine import NexusEngine
+from .notifier import send_alert_email
 
 load_dotenv(find_dotenv(usecwd=True), override=True)
 
@@ -125,6 +126,7 @@ def run_agent(db: ShieldDB, nexus_engine: NexusEngine, agent: ComplianceAgent) -
                 logger.warning(
                     "%d new CRITICAL/RED alert(s) detected", len(critical_or_red)
                 )
+                ai_messages: dict[str, str] = {}
                 for alert in critical_or_red:
                     message = agent.generate_alert_message(
                         state=alert["state"],
@@ -133,12 +135,16 @@ def run_agent(db: ShieldDB, nexus_engine: NexusEngine, agent: ComplianceAgent) -
                         pct=alert["pct_of_threshold"],
                         tx_count=alert["transaction_count"],
                     )
+                    ai_messages[alert["state"]] = message
                     logger.warning(
                         "ALERT [%s] %s:\n%s",
                         alert["risk_level"],
                         alert["state"],
                         message,
                     )
+                # Fetch the persisted alert records (with IDs) to check notified_at
+                unnotified = db.get_open_alerts_unnotified(merchant_id)
+                send_alert_email(db, merchant_id, unnotified, ai_messages)
             else:
                 logger.info("No new critical alerts. %d total alerts processed.", len(new_alerts))
 
