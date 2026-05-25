@@ -79,6 +79,10 @@ export function explainNexus(merchantId, state) {
   return request(`/alerts/explain-nexus/${state}`);
 }
 
+export function getExposureEstimate(state) {
+  return request(`/alerts/exposure/${state}`);
+}
+
 // Connectors
 export function getConnectedPlatforms(merchantId) {
   return request('/connectors');

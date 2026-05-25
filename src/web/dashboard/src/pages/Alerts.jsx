@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { AlertTriangle, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react'
-import { getAlerts, getAlert, confirmFix, snoozeAlert } from '../api/client'
+import { getAlerts, getAlert, confirmFix, snoozeAlert, getExposureEstimate } from '../api/client'
 import { colors } from '../design/tokens'
 import RiskBadge from '../components/RiskBadge'
 import ConfirmModal from '../components/ConfirmModal'
@@ -31,6 +31,7 @@ export default function Alerts({ showToast }) {
   const [expanded, setExpanded] = useState(null)
   const [explanations, setExplanations] = useState({})
   const [loadingExplanation, setLoadingExplanation] = useState(null)
+  const [exposures, setExposures] = useState({})
   const [fixModal, setFixModal] = useState(null)
   const [processing, setProcessing] = useState(false)
 
@@ -58,7 +59,13 @@ export default function Alerts({ showToast }) {
         setLoadingExplanation(null)
       }
     }
-  }, [expanded, explanations])
+    // Fetch exposure for RED/CRITICAL alerts
+    if (['RED','CRITICAL'].includes(alert.risk_level) && !exposures[alert.state]) {
+      getExposureEstimate(alert.state)
+        .then(exp => setExposures(prev => ({ ...prev, [alert.state]: exp })))
+        .catch(() => {})
+    }
+  }, [expanded, explanations, exposures])
 
   const handleFix = useCallback(async () => {
     if (!fixModal) return
@@ -154,6 +161,38 @@ export default function Alerts({ showToast }) {
                       ? <span className="text-gray-400">Loading AI explanation...</span>
                       : explanations[alert.id] || 'Click to load explanation...'}
                   </div>
+                  {/* Back-tax exposure estimate */}
+                  {['RED','CRITICAL'].includes(alert.risk_level) && exposures[alert.state] && (
+                    <div className="mb-4 p-3 bg-red-50 border border-red-100 rounded-lg">
+                      <div className="text-xs font-semibold text-red-700 uppercase tracking-wide mb-2">
+                        Estimated Back-Tax Exposure
+                      </div>
+                      <div className="grid grid-cols-3 gap-3 text-sm">
+                        <div>
+                          <div className="text-gray-500 text-xs">Base Tax</div>
+                          <div className="font-semibold text-gray-800">
+                            ${exposures[alert.state].base_tax_estimate.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 text-xs">+ 25% Penalty</div>
+                          <div className="font-semibold text-gray-800">
+                            ${exposures[alert.state].penalty_estimate.toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div className="text-gray-500 text-xs">Total Estimate</div>
+                          <div className="font-bold text-red-700 text-base">
+                            ${exposures[alert.state].total_exposure.toLocaleString()}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-2">
+                        Based on {(exposures[alert.state].tax_rate * 100).toFixed(1)}% average rate · estimate only, not legal advice
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex gap-2.5">
                     <button
                       onClick={e => { e.stopPropagation(); setFixModal(alert) }}

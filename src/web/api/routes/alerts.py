@@ -18,6 +18,7 @@ from pydantic import BaseModel, Field
 
 from src.agent.claude_agent import ComplianceAgent
 from src.agent.db import ShieldDB
+from src.agent.nexus_data import estimate_back_tax_exposure
 from src.agent.nexus_engine import NexusEngine
 from src.agent.remediator import Remediator
 from src.web.api.middleware.auth import get_merchant_id
@@ -80,6 +81,23 @@ async def list_alerts(
     """Return all open alerts for the merchant."""
     try:
         return db.get_open_alerts(merchant_id)
+    finally:
+        db.close()
+
+
+@router.get("/exposure/{state}")
+async def exposure_estimate(
+    state: str,
+    merchant_id: str = Depends(get_merchant_id),
+    db: ShieldDB = Depends(get_db),
+) -> dict[str, Any]:
+    """Return an estimated back-tax exposure for a RED/CRITICAL state."""
+    try:
+        statuses = db.get_nexus_status(merchant_id)
+        status = next((s for s in statuses if s["state"] == state.upper()), None)
+        if not status:
+            raise HTTPException(status_code=404, detail=f"No sales data for state {state.upper()}")
+        return estimate_back_tax_exposure(state, float(status["total_sales"]))
     finally:
         db.close()
 

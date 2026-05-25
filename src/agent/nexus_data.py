@@ -78,6 +78,43 @@ NEXUS_THRESHOLDS: dict[str, NexusThreshold] = {
 }
 
 
+# Average combined state+local sales tax rates (2026 estimates).
+# Source: Tax Foundation state-by-state averages.
+STATE_TAX_RATES: dict[str, float] = {
+    "AL": 0.0922, "AZ": 0.0840, "AR": 0.0947, "CA": 0.0868, "CO": 0.0777,
+    "CT": 0.0635, "FL": 0.0701, "GA": 0.0732, "HI": 0.0435, "ID": 0.0606,
+    "IL": 0.0882, "IN": 0.0700, "IA": 0.0694, "KS": 0.0868, "KY": 0.0600,
+    "LA": 0.0952, "ME": 0.0550, "MD": 0.0600, "MA": 0.0625, "MI": 0.0600,
+    "MN": 0.0749, "MS": 0.0707, "MO": 0.0814, "NE": 0.0694, "NV": 0.0823,
+    "NJ": 0.0660, "NM": 0.0783, "NY": 0.0852, "NC": 0.0698, "ND": 0.0696,
+    "OH": 0.0722, "OK": 0.0898, "PA": 0.0634, "RI": 0.0700, "SC": 0.0748,
+    "SD": 0.0640, "TN": 0.0955, "TX": 0.0819, "UT": 0.0717, "VT": 0.0618,
+    "VA": 0.0573, "WA": 0.0928, "WV": 0.0650, "WI": 0.0543, "WY": 0.0531,
+    "DC": 0.0600,
+}
+
+DEFAULT_TAX_RATE = 0.0700  # fallback for states not in table
+
+
+def estimate_back_tax_exposure(state_code: str, total_sales: float) -> dict:
+    """Estimate back-tax exposure for a RED/CRITICAL state.
+
+    Formula: total_sales * state_rate * 1.25 (25% penalty factor).
+    Returns the rate used, base tax, penalty, and total estimate.
+    """
+    rate = STATE_TAX_RATES.get(state_code.upper(), DEFAULT_TAX_RATE)
+    base_tax = total_sales * rate
+    penalty = base_tax * 0.25
+    total = base_tax + penalty
+    return {
+        "state": state_code.upper(),
+        "tax_rate": rate,
+        "base_tax_estimate": round(base_tax, 2),
+        "penalty_estimate": round(penalty, 2),
+        "total_exposure": round(total, 2),
+    }
+
+
 def get_threshold(state_code: str) -> NexusThreshold | None:
     """Look up a state's nexus threshold by two-letter code (case-insensitive)."""
     return NEXUS_THRESHOLDS.get(state_code.upper())
