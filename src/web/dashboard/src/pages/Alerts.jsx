@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
-import { AlertTriangle, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react';
-import { getAlerts, getAlert, confirmFix, snoozeAlert } from '../api/client';
-import RiskBadge from '../components/RiskBadge';
-import ConfirmModal from '../components/ConfirmModal';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useState, useEffect, useCallback } from 'react'
+import { AlertTriangle, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react'
+import { getAlerts, getAlert, confirmFix, snoozeAlert } from '../api/client'
+import { colors } from '../design/tokens'
+import RiskBadge from '../components/RiskBadge'
+import ConfirmModal from '../components/ConfirmModal'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -17,198 +18,147 @@ const STATE_NAMES = {
   SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
   VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
   DC:'District of Columbia',
-};
+}
 
 function formatCurrency(val) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0)
 }
 
 export default function Alerts({ showToast }) {
-  const [alerts, setAlerts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [expanded, setExpanded] = useState(null);
-  const [explanations, setExplanations] = useState({});
-  const [loadingExplanation, setLoadingExplanation] = useState(null);
-  const [fixModal, setFixModal] = useState(null);
-  const [processing, setProcessing] = useState(false);
+  const [alerts, setAlerts] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [expanded, setExpanded] = useState(null)
+  const [explanations, setExplanations] = useState({})
+  const [loadingExplanation, setLoadingExplanation] = useState(null)
+  const [fixModal, setFixModal] = useState(null)
+  const [processing, setProcessing] = useState(false)
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const data = await getAlerts();
-      setAlerts(data || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+    setLoading(true); setError(null)
+    try { setAlerts((await getAlerts()) || []) }
+    catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }, [])
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load() }, [load])
 
   const toggleExpand = useCallback(async (alert) => {
-    const id = alert.id;
-    if (expanded === id) {
-      setExpanded(null);
-      return;
-    }
-    setExpanded(id);
-
+    const id = alert.id
+    if (expanded === id) { setExpanded(null); return }
+    setExpanded(id)
     if (!explanations[id]) {
-      setLoadingExplanation(id);
+      setLoadingExplanation(id)
       try {
-        const detail = await getAlert(null, id);
-        setExplanations(prev => ({ ...prev, [id]: detail.ai_explanation }));
+        const detail = await getAlert(null, id)
+        setExplanations(prev => ({ ...prev, [id]: detail.ai_explanation }))
       } catch {
-        setExplanations(prev => ({ ...prev, [id]: 'Unable to load AI explanation.' }));
+        setExplanations(prev => ({ ...prev, [id]: 'Unable to load AI explanation.' }))
       } finally {
-        setLoadingExplanation(null);
+        setLoadingExplanation(null)
       }
     }
-  }, [expanded, explanations]);
+  }, [expanded, explanations])
 
   const handleFix = useCallback(async () => {
-    if (!fixModal) return;
-    setProcessing(true);
+    if (!fixModal) return
+    setProcessing(true)
     try {
-      await confirmFix(null, fixModal.id, fixModal.state);
-      showToast?.(`Sales tax registration initiated for ${STATE_NAMES[fixModal.state] || fixModal.state}`, 'success');
-      setAlerts(prev => prev.filter(a => a.id !== fixModal.id));
-      setFixModal(null);
+      await confirmFix(null, fixModal.id, fixModal.state)
+      showToast?.(`Sales tax registration initiated for ${STATE_NAMES[fixModal.state] || fixModal.state}`, 'success')
+      setAlerts(prev => prev.filter(a => a.id !== fixModal.id))
+      setFixModal(null)
     } catch (err) {
-      showToast?.(err.message, 'error');
+      showToast?.(err.message, 'error')
     } finally {
-      setProcessing(false);
+      setProcessing(false)
     }
-  }, [fixModal, showToast]);
+  }, [fixModal, showToast])
 
   const handleSnooze = useCallback(async (alert) => {
     try {
-      await snoozeAlert(null, alert.id, 7);
-      showToast?.(`Alert snoozed for 7 days`, 'success');
-      setAlerts(prev => prev.filter(a => a.id !== alert.id));
+      await snoozeAlert(null, alert.id, 7)
+      showToast?.('Alert snoozed for 7 days', 'success')
+      setAlerts(prev => prev.filter(a => a.id !== alert.id))
     } catch (err) {
-      showToast?.(err.message, 'error');
+      showToast?.(err.message, 'error')
     }
-  }, [showToast]);
+  }, [showToast])
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div style={{ padding: 40, color: '#991b1b' }}>Failed to load alerts: {error}</div>;
+  if (loading) return <LoadingSpinner />
+  if (error) return <div className="p-10 text-red-800">Failed to load alerts: {error}</div>
 
   if (alerts.length === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '80px 20px' }}>
-        <CheckCircle size={56} color="#22c55e" style={{ marginBottom: 16 }} />
-        <h2 style={{ fontSize: 20, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
-          No open alerts
-        </h2>
-        <p style={{ color: '#6b7280', fontSize: 15 }}>
-          Your sales tax compliance is up to date.
-        </p>
+      <div className="text-center py-20 px-5">
+        <CheckCircle size={56} className="mx-auto mb-4" color={colors.risk.GREEN} />
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">No open alerts</h2>
+        <p className="text-gray-500 text-[15px]">Your sales tax compliance is up to date.</p>
       </div>
-    );
+    )
   }
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 24 }}>
-        Alerts ({alerts.length})
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Alerts ({alerts.length})</h1>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+      <div className="flex flex-col gap-3">
         {alerts.map(alert => {
           const pct = alert.threshold_revenue
             ? Math.round((alert.total_sales / alert.threshold_revenue) * 100)
-            : 0;
-          const isExpanded = expanded === alert.id;
+            : 0
+          const isExpanded = expanded === alert.id
+          const riskColor = colors.risk[alert.risk_level] || colors.risk.YELLOW
 
           return (
-            <div
-              key={alert.id}
-              style={{
-                backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
-                overflow: 'hidden',
-              }}
-            >
-              {/* Header */}
+            <div key={alert.id} className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               <div
                 onClick={() => toggleExpand(alert)}
-                style={{
-                  padding: '16px 20px', cursor: 'pointer',
-                  display: 'flex', alignItems: 'center', gap: 16, flexWrap: 'wrap',
-                }}
+                className="px-5 py-4 cursor-pointer flex items-center gap-4 flex-wrap hover:bg-gray-50 transition-colors"
               >
-                <AlertTriangle
-                  size={20}
-                  color={
-                    alert.risk_level === 'CRITICAL' ? '#7c3aed' :
-                    alert.risk_level === 'RED' ? '#ef4444' : '#eab308'
-                  }
-                />
-                <div style={{ flex: 1, minWidth: 200 }}>
-                  <div style={{ fontWeight: 600, color: '#111827', fontSize: 15 }}>
+                <AlertTriangle size={20} color={riskColor} />
+
+                <div className="flex-1 min-w-[200px]">
+                  <div className="font-semibold text-gray-900 text-[15px]">
                     {STATE_NAMES[alert.state] || alert.state}
                   </div>
-                  <div style={{ fontSize: 13, color: '#6b7280', marginTop: 2 }}>
+                  <div className="text-[13px] text-gray-500 mt-0.5">
                     {formatCurrency(alert.total_sales)} of {formatCurrency(alert.threshold_revenue)} threshold
                   </div>
                 </div>
+
                 <RiskBadge level={alert.risk_level} />
 
-                {/* Progress bar */}
-                <div style={{ width: 120, display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ flex: 1, height: 6, backgroundColor: '#f3f4f6', borderRadius: 3 }}>
-                    <div style={{
-                      height: '100%', borderRadius: 3,
-                      backgroundColor: alert.risk_level === 'CRITICAL' ? '#7c3aed' :
-                        alert.risk_level === 'RED' ? '#ef4444' : '#eab308',
-                      width: `${Math.min(pct, 100)}%`,
-                    }} />
+                <div className="w-28 flex items-center gap-1.5">
+                  <div className="flex-1 h-1.5 bg-gray-100 rounded-full">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: riskColor }}
+                    />
                   </div>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: '#374151' }}>{pct}%</span>
+                  <span className="text-xs font-semibold text-gray-700">{pct}%</span>
                 </div>
 
-                {isExpanded ? <ChevronUp size={18} color="#9ca3af" /> : <ChevronDown size={18} color="#9ca3af" />}
+                {isExpanded ? <ChevronUp size={18} className="text-gray-400" /> : <ChevronDown size={18} className="text-gray-400" />}
               </div>
 
-              {/* Expanded detail */}
               {isExpanded && (
-                <div style={{ padding: '0 20px 20px', borderTop: '1px solid #f3f4f6' }}>
-                  {/* AI explanation */}
-                  <div style={{
-                    margin: '16px 0', padding: 16, backgroundColor: '#f9fafb',
-                    borderRadius: 8, fontSize: 14, color: '#374151', lineHeight: 1.7,
-                  }}>
-                    {loadingExplanation === alert.id ? (
-                      <span style={{ color: '#9ca3af' }}>Loading AI explanation...</span>
-                    ) : (
-                      explanations[alert.id] || 'Click to load explanation...'
-                    )}
+                <div className="px-5 pb-5 border-t border-gray-100">
+                  <div className="my-4 p-4 bg-gray-50 rounded-lg text-sm text-gray-700 leading-relaxed">
+                    {loadingExplanation === alert.id
+                      ? <span className="text-gray-400">Loading AI explanation...</span>
+                      : explanations[alert.id] || 'Click to load explanation...'}
                   </div>
-
-                  {/* Actions */}
-                  <div style={{ display: 'flex', gap: 10 }}>
+                  <div className="flex gap-2.5">
                     <button
-                      onClick={(e) => { e.stopPropagation(); setFixModal(alert); }}
-                      style={{
-                        padding: '8px 20px', borderRadius: 8, border: 'none',
-                        backgroundColor: '#22c55e', color: '#fff', fontSize: 14,
-                        fontWeight: 600, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                      }}
+                      onClick={e => { e.stopPropagation(); setFixModal(alert) }}
+                      className="flex items-center gap-1.5 px-5 py-2 rounded-lg border-none bg-green-500 text-white text-sm font-semibold cursor-pointer hover:bg-green-600 transition-colors"
                     >
                       FIX — $1.00
                     </button>
                     <button
-                      onClick={(e) => { e.stopPropagation(); handleSnooze(alert); }}
-                      style={{
-                        padding: '8px 20px', borderRadius: 8, border: '1px solid #d1d5db',
-                        backgroundColor: '#fff', color: '#374151', fontSize: 14,
-                        fontWeight: 500, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', gap: 6,
-                      }}
+                      onClick={e => { e.stopPropagation(); handleSnooze(alert) }}
+                      className="flex items-center gap-1.5 px-5 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-medium cursor-pointer hover:bg-gray-50 transition-colors"
                     >
                       <Clock size={14} /> Snooze 7 days
                     </button>
@@ -216,7 +166,7 @@ export default function Alerts({ showToast }) {
                 </div>
               )}
             </div>
-          );
+          )
         })}
       </div>
 
@@ -229,5 +179,5 @@ export default function Alerts({ showToast }) {
         onCancel={() => setFixModal(null)}
       />
     </div>
-  );
+  )
 }

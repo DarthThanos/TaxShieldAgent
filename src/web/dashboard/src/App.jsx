@@ -1,77 +1,62 @@
-import { useState, useEffect, useCallback } from 'react';
-import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback } from 'react'
+import { BrowserRouter, Routes, Route, NavLink, useLocation } from 'react-router-dom'
 import {
   Shield, LayoutDashboard, Bell, Plug, ArrowLeftRight,
   ClipboardList, RefreshCw, Menu, X,
-} from 'lucide-react';
-import { getAlerts, syncAllPlatforms, getHealth } from './api/client';
-import Toast from './components/Toast';
-import Dashboard from './pages/Dashboard';
-import Alerts from './pages/Alerts';
-import Platforms from './pages/Platforms';
-import Transactions from './pages/Transactions';
-import Audit from './pages/Audit';
+} from 'lucide-react'
+import { getAlerts, syncAllPlatforms, getHealth } from './api/client'
+import Toast from './components/Toast'
+import Dashboard from './pages/Dashboard'
+import Alerts from './pages/Alerts'
+import Platforms from './pages/Platforms'
+import Transactions from './pages/Transactions'
+import Audit from './pages/Audit'
 
-const MERCHANT_ID = import.meta.env.VITE_DEV_MERCHANT_ID || 'platform';
+const MERCHANT_ID = import.meta.env.VITE_DEV_MERCHANT_ID || 'platform'
 
 function AppContent() {
-  const location = useLocation();
-  const [alertCount, setAlertCount] = useState(0);
-  const [lastSync, setLastSync] = useState(null);
-  const [syncing, setSyncing] = useState(false);
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [toast, setToast] = useState({ message: '', type: 'success' });
-  const [backendOnline, setBackendOnline] = useState(true);
-  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const location = useLocation()
+  const [alertCount, setAlertCount] = useState(0)
+  const [lastSync, setLastSync] = useState(null)
+  const [syncing, setSyncing] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [toast, setToast] = useState({ message: '', type: 'success' })
+  const [backendOnline, setBackendOnline] = useState(true)
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768)
 
-  const showToast = useCallback((message, type = 'success') => {
-    setToast({ message, type });
-  }, []);
+  const showToast = useCallback((message, type = 'success') => setToast({ message, type }), [])
+  const clearToast = useCallback(() => setToast({ message: '', type: 'success' }), [])
 
-  const clearToast = useCallback(() => {
-    setToast({ message: '', type: 'success' });
-  }, []);
-
-  // Track window resize for responsive
   useEffect(() => {
-    const onResize = () => setIsMobile(window.innerWidth <= 768);
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
+    const onResize = () => setIsMobile(window.innerWidth <= 768)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
 
-  // Load alert count
   useEffect(() => {
-    getAlerts()
-      .then(data => setAlertCount((data || []).length))
-      .catch(() => {});
-  }, [location.pathname]);
+    getAlerts().then(d => setAlertCount((d || []).length)).catch(() => {})
+  }, [location.pathname])
 
-  // Check backend health
   useEffect(() => {
-    getHealth()
-      .then(() => setBackendOnline(true))
-      .catch(() => setBackendOnline(false));
-  }, []);
+    getHealth().then(() => setBackendOnline(true)).catch(() => setBackendOnline(false))
+  }, [])
 
   const handleSync = useCallback(async () => {
-    setSyncing(true);
+    setSyncing(true)
     try {
-      await syncAllPlatforms();
-      setLastSync(new Date().toLocaleTimeString());
-      showToast('All platforms synced successfully');
-      const alerts = await getAlerts();
-      setAlertCount((alerts || []).length);
+      await syncAllPlatforms()
+      setLastSync(new Date().toLocaleTimeString())
+      showToast('All platforms synced successfully')
+      const alerts = await getAlerts()
+      setAlertCount((alerts || []).length)
     } catch (err) {
-      showToast(err.message, 'error');
+      showToast(err.message, 'error')
     } finally {
-      setSyncing(false);
+      setSyncing(false)
     }
-  }, [showToast]);
+  }, [showToast])
 
-  // Close sidebar on route change (mobile)
-  useEffect(() => {
-    setSidebarOpen(false);
-  }, [location.pathname]);
+  useEffect(() => { setSidebarOpen(false) }, [location.pathname])
 
   const navItems = [
     { path: '/', icon: LayoutDashboard, label: 'Dashboard' },
@@ -79,79 +64,51 @@ function AppContent() {
     { path: '/platforms', icon: Plug, label: 'Platforms' },
     { path: '/transactions', icon: ArrowLeftRight, label: 'Transactions' },
     { path: '/audit', icon: ClipboardList, label: 'Audit Log' },
-  ];
-
-  const navLinkStyle = (isActive) => ({
-    display: 'flex', alignItems: 'center', gap: 12,
-    padding: '10px 16px', borderRadius: 8, textDecoration: 'none',
-    fontSize: 14, fontWeight: 500, transition: 'background-color 0.15s',
-    backgroundColor: isActive ? 'rgba(99,102,241,0.15)' : 'transparent',
-    color: isActive ? '#818cf8' : '#94a3b8',
-  });
+  ]
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f8fafc' }}>
-      {/* Sidebar overlay for mobile */}
+    <div className="flex min-h-screen bg-slate-50">
+      {/* Mobile overlay */}
       {sidebarOpen && isMobile && (
-        <div
-          onClick={() => setSidebarOpen(false)}
-          style={{
-            position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.4)',
-            zIndex: 40,
-          }}
-        />
+        <div onClick={() => setSidebarOpen(false)} className="fixed inset-0 bg-black/40 z-40" />
       )}
 
       {/* Sidebar */}
-      <aside style={{
-        width: 260, backgroundColor: '#1a1f2e', color: '#fff',
-        display: 'flex', flexDirection: 'column', flexShrink: 0,
-        ...(isMobile
-          ? {
-              position: 'fixed', top: 0, bottom: 0,
-              left: sidebarOpen ? 0 : -260,
-              zIndex: 50, transition: 'left 0.2s',
-            }
-          : {
-              position: 'sticky', top: 0, height: '100vh',
-            }
-        ),
-      }}>
+      <aside
+        className="w-64 bg-sidebar text-white flex flex-col flex-shrink-0 scrollbar-thin"
+        style={isMobile
+          ? { position: 'fixed', top: 0, bottom: 0, left: sidebarOpen ? 0 : -256, zIndex: 50, transition: 'left 0.2s' }
+          : { position: 'sticky', top: 0, height: '100vh' }
+        }
+      >
         {/* Logo */}
-        <div style={{
-          padding: '20px 20px', display: 'flex', alignItems: 'center', gap: 12,
-          borderBottom: '1px solid rgba(255,255,255,0.08)',
-        }}>
-          <div style={{
-            width: 36, height: 36, borderRadius: 10,
-            background: 'linear-gradient(135deg, #6366f1, #8b5cf6)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-          }}>
+        <div className="px-5 py-5 flex items-center gap-3 border-b border-white/[0.08]">
+          <div className="w-9 h-9 rounded-[10px] bg-gradient-to-br from-primary to-violet-500 flex items-center justify-center">
             <Shield size={20} color="#fff" />
           </div>
           <div>
-            <div style={{ fontWeight: 700, fontSize: 16, letterSpacing: '-0.02em' }}>TaxShield</div>
-            <div style={{ fontSize: 11, color: '#64748b', fontWeight: 500 }}>Agent</div>
+            <div className="font-bold text-base tracking-tight">TaxShield</div>
+            <div className="text-[11px] text-slate-500 font-medium">Agent</div>
           </div>
         </div>
 
-        {/* Navigation */}
-        <nav style={{ flex: 1, padding: '16px 12px', display: 'flex', flexDirection: 'column', gap: 4 }}>
+        {/* Nav */}
+        <nav className="flex-1 px-3 py-4 flex flex-col gap-1">
           {navItems.map(item => (
             <NavLink
               key={item.path}
               to={item.path}
               end={item.path === '/'}
-              style={({ isActive }) => navLinkStyle(isActive)}
+              className={({ isActive }) =>
+                `flex items-center gap-3 px-4 py-2.5 rounded-lg no-underline text-sm font-medium transition-colors ${
+                  isActive ? 'bg-primary/15 text-primary-light' : 'text-slate-400 hover:bg-white/5 hover:text-slate-200'
+                }`
+              }
             >
               <item.icon size={18} />
-              <span style={{ flex: 1 }}>{item.label}</span>
+              <span className="flex-1">{item.label}</span>
               {item.badge > 0 && (
-                <span style={{
-                  backgroundColor: '#ef4444', color: '#fff',
-                  fontSize: 11, fontWeight: 700, padding: '1px 7px',
-                  borderRadius: 9999, minWidth: 18, textAlign: 'center',
-                }}>
+                <span className="bg-red-500 text-white text-[11px] font-bold px-1.5 py-px rounded-full min-w-[18px] text-center">
                   {item.badge}
                 </span>
               )}
@@ -160,72 +117,41 @@ function AppContent() {
         </nav>
 
         {/* Backend status */}
-        <div style={{
-          padding: '16px 20px', borderTop: '1px solid rgba(255,255,255,0.08)',
-          fontSize: 12, color: '#64748b',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <div style={{
-              width: 8, height: 8, borderRadius: '50%',
-              backgroundColor: backendOnline ? '#22c55e' : '#ef4444',
-            }} />
+        <div className="px-5 py-4 border-t border-white/[0.08] text-xs text-slate-500">
+          <div className="flex items-center gap-1.5">
+            <div className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-green-500' : 'bg-red-500'}`} />
             Backend {backendOnline ? 'Online' : 'Offline'}
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+      {/* Main */}
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar */}
-        <header style={{
-          backgroundColor: '#fff', borderBottom: '1px solid #e5e7eb',
-          padding: '12px 24px', display: 'flex', alignItems: 'center', gap: 16,
-          position: 'sticky', top: 0, zIndex: 30,
-        }}>
-          {/* Hamburger (mobile) */}
+        <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center gap-4 sticky top-0 z-30">
           {isMobile && (
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{
-                background: 'none', border: 'none', cursor: 'pointer', padding: 4,
-              }}
-            >
+            <button onClick={() => setSidebarOpen(!sidebarOpen)} className="bg-transparent border-none cursor-pointer p-1">
               {sidebarOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           )}
-
-          <div style={{ flex: 1 }}>
-            <span style={{ fontSize: 13, color: '#6b7280' }}>Merchant: </span>
-            <span style={{ fontSize: 13, fontWeight: 600, color: '#374151', fontFamily: 'monospace' }}>
-              {MERCHANT_ID}
-            </span>
+          <div className="flex-1">
+            <span className="text-[13px] text-gray-500">Merchant: </span>
+            <span className="text-[13px] font-semibold text-gray-700 font-mono">{MERCHANT_ID}</span>
           </div>
-
           {lastSync && !isMobile && (
-            <span style={{ fontSize: 12, color: '#9ca3af' }}>
-              Last sync: {lastSync}
-            </span>
+            <span className="text-xs text-gray-400">Last sync: {lastSync}</span>
           )}
-
           <button
             onClick={handleSync}
             disabled={syncing}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6,
-              padding: '6px 16px', borderRadius: 8, border: 'none',
-              backgroundColor: '#6366f1', color: '#fff', fontSize: 13,
-              fontWeight: 600, cursor: 'pointer', opacity: syncing ? 0.7 : 1,
-            }}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg border-none bg-primary text-white text-[13px] font-semibold cursor-pointer hover:bg-indigo-600 transition-colors ${syncing ? 'opacity-70' : ''}`}
           >
-            <RefreshCw size={14} style={{
-              animation: syncing ? 'spin 1s linear infinite' : 'none',
-            }} />
+            <RefreshCw size={14} className={syncing ? 'animate-spin' : ''} />
             {syncing ? 'Syncing...' : 'Sync Now'}
           </button>
         </header>
 
-        {/* Page content */}
-        <main style={{ flex: 1, padding: isMobile ? '16px' : '24px 24px 48px' }}>
+        <main className={`flex-1 ${isMobile ? 'p-4' : 'p-6 pb-12'}`}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/alerts" element={<Alerts showToast={showToast} />} />
@@ -238,7 +164,7 @@ function AppContent() {
 
       <Toast message={toast.message} type={toast.type} onClose={clearToast} />
     </div>
-  );
+  )
 }
 
 export default function App() {
@@ -246,5 +172,5 @@ export default function App() {
     <BrowserRouter>
       <AppContent />
     </BrowserRouter>
-  );
+  )
 }

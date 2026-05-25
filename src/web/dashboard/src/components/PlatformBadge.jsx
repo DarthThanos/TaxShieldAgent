@@ -1,29 +1,17 @@
-const PLATFORM_COLORS = {
-  stripe: { bg: '#ede9fe', color: '#6d28d9' },
-  shopify: { bg: '#dcfce7', color: '#166534' },
-  etsy: { bg: '#ffedd5', color: '#9a3412' },
-  paypal: { bg: '#dbeafe', color: '#1e40af' },
-  square: { bg: '#ccfbf1', color: '#0f766e' },
-  amazon: { bg: '#fef9c3', color: '#854d0e' },
-};
+const CLASSES = {
+  stripe:  'bg-violet-100 text-violet-800',
+  shopify: 'bg-green-100 text-green-800',
+  etsy:    'bg-orange-100 text-orange-800',
+  paypal:  'bg-blue-100 text-blue-800',
+  square:  'bg-teal-100 text-teal-800',
+  amazon:  'bg-yellow-100 text-yellow-800',
+}
 
 export default function PlatformBadge({ platform }) {
-  const name = (platform || '').toLowerCase();
-  const style = PLATFORM_COLORS[name] || { bg: '#f3f4f6', color: '#374151' };
+  const cls = CLASSES[(platform || '').toLowerCase()] || 'bg-gray-100 text-gray-700'
   return (
-    <span
-      style={{
-        display: 'inline-block',
-        padding: '2px 10px',
-        borderRadius: 9999,
-        fontSize: 12,
-        fontWeight: 600,
-        backgroundColor: style.bg,
-        color: style.color,
-        textTransform: 'capitalize',
-      }}
-    >
+    <span className={`inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize ${cls}`}>
       {platform}
     </span>
-  );
+  )
 }

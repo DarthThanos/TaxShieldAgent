@@ -1,22 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { DollarSign, MapPin, AlertTriangle, Bell, Check } from 'lucide-react';
-import { getNexusStatus, getSummary, getAlerts } from '../api/client';
-import StatCard from '../components/StatCard';
-import RiskBadge from '../components/RiskBadge';
-import LoadingSpinner from '../components/LoadingSpinner';
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { DollarSign, MapPin, AlertTriangle, Bell, Check } from 'lucide-react'
+import { getNexusStatus, getSummary, getAlerts } from '../api/client'
+import { colors } from '../design/tokens'
+import StatCard from '../components/StatCard'
+import RiskBadge from '../components/RiskBadge'
+import LoadingSpinner from '../components/LoadingSpinner'
 
-// States with no general sales tax
-const NO_SALES_TAX = ['MT', 'NH', 'OR', 'DE', 'AK'];
+const NO_SALES_TAX = ['MT', 'NH', 'OR', 'DE', 'AK']
 
-// All 50 states + DC
 const ALL_STATES = [
   'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
   'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
   'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
   'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
   'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC',
-];
+]
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -30,171 +29,115 @@ const STATE_NAMES = {
   SD:'South Dakota',TN:'Tennessee',TX:'Texas',UT:'Utah',VT:'Vermont',
   VA:'Virginia',WA:'Washington',WV:'West Virginia',WI:'Wisconsin',WY:'Wyoming',
   DC:'District of Columbia',
-};
-
-const RISK_COLORS = {
-  GREEN: '#22c55e',
-  YELLOW: '#eab308',
-  RED: '#ef4444',
-  CRITICAL: '#7c3aed',
-};
+}
 
 function formatCurrency(val) {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val || 0);
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(val || 0)
 }
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-  const [nexus, setNexus] = useState([]);
-  const [summary, setSummary] = useState(null);
-  const [alertCount, setAlertCount] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [hoveredState, setHoveredState] = useState(null);
+  const navigate = useNavigate()
+  const [nexus, setNexus] = useState([])
+  const [alertCount, setAlertCount] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [hoveredState, setHoveredState] = useState(null)
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null)
     try {
-      const [nexusData, summaryData, alertsData] = await Promise.all([
-        getNexusStatus(),
-        getSummary(),
-        getAlerts(),
-      ]);
-      setNexus(nexusData || []);
-      setSummary(summaryData || {});
-      setAlertCount((alertsData || []).length);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      const [nexusData, , alertsData] = await Promise.all([getNexusStatus(), getSummary(), getAlerts()])
+      setNexus(nexusData || [])
+      setAlertCount((alertsData || []).length)
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }, [])
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load() }, [load])
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div style={{ padding: 40, color: '#991b1b' }}>Failed to load dashboard: {error}</div>;
+  if (loading) return <LoadingSpinner />
+  if (error) return <div className="p-10 text-red-800">Failed to load dashboard: {error}</div>
 
-  // Build lookup from nexus data
-  const stateMap = {};
-  (nexus || []).forEach(s => { stateMap[s.state] = s; });
+  const stateMap = {}
+  nexus.forEach(s => { stateMap[s.state] = s })
 
-  const totalSales = nexus.reduce((sum, s) => sum + (s.total_sales || 0), 0);
-  const statesMonitored = nexus.length;
-  const statesAtRisk = nexus.filter(s => ['YELLOW', 'RED', 'CRITICAL'].includes(s.risk_level)).length;
-
-  // Sort by pct descending for the table
+  const totalSales = nexus.reduce((sum, s) => sum + (s.total_sales || 0), 0)
+  const statesAtRisk = nexus.filter(s => ['YELLOW', 'RED', 'CRITICAL'].includes(s.risk_level)).length
   const sorted = [...nexus].sort((a, b) => {
-    const pctA = a.threshold_revenue ? (a.total_sales / a.threshold_revenue) : 0;
-    const pctB = b.threshold_revenue ? (b.total_sales / b.threshold_revenue) : 0;
-    return pctB - pctA;
-  });
+    const pa = a.threshold_revenue ? a.total_sales / a.threshold_revenue : 0
+    const pb = b.threshold_revenue ? b.total_sales / b.threshold_revenue : 0
+    return pb - pa
+  })
 
   return (
     <div>
-      <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', marginBottom: 24 }}>
-        Nexus Overview
-      </h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-6">Nexus Overview</h1>
 
       {/* Summary cards */}
-      <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginBottom: 32 }}>
-        <StatCard icon={DollarSign} label="Total YTD Sales" value={formatCurrency(totalSales)} color="#6366f1" />
-        <StatCard icon={MapPin} label="States Monitored" value={statesMonitored} color="#0ea5e9" />
+      <div className="flex gap-4 flex-wrap mb-8">
+        <StatCard icon={DollarSign} label="Total YTD Sales" value={formatCurrency(totalSales)} color={colors.primary} />
+        <StatCard icon={MapPin} label="States Monitored" value={nexus.length} color="#0ea5e9" />
         <StatCard icon={AlertTriangle} label="States at Risk" value={statesAtRisk} color="#f59e0b" />
-        <StatCard icon={Bell} label="Open Alerts" value={alertCount} color="#ef4444" />
+        <StatCard icon={Bell} label="Open Alerts" value={alertCount} color={colors.risk.RED} />
       </div>
 
-      {/* State grid map */}
-      <div style={{
-        backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
-        padding: 24, marginBottom: 32,
-      }}>
-        <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
-          State Risk Map
-        </h2>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))', gap: 6 }}>
+      {/* State risk map */}
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <h2 className="text-base font-semibold text-gray-900 mb-4">State Risk Map</h2>
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
           {ALL_STATES.map(code => {
-            const data = stateMap[code];
-            const isNoTax = NO_SALES_TAX.includes(code);
-            let bg = '#e5e7eb'; // no data
-            let textColor = '#6b7280';
+            const data = stateMap[code]
+            const isNoTax = NO_SALES_TAX.includes(code)
+            let bg = '#e5e7eb', textColor = '#6b7280'
+            if (isNoTax) { bg = '#dbeafe'; textColor = '#1e40af' }
+            else if (data) { bg = colors.risk[data.risk_level] || '#e5e7eb'; textColor = '#fff'; if (data.risk_level === 'YELLOW') textColor = '#422006' }
 
-            if (isNoTax) {
-              bg = '#dbeafe';
-              textColor = '#1e40af';
-            } else if (data) {
-              bg = RISK_COLORS[data.risk_level] || '#e5e7eb';
-              textColor = '#fff';
-              if (data.risk_level === 'YELLOW') textColor = '#422006';
-            }
-
-            const pct = data && data.threshold_revenue
-              ? Math.round((data.total_sales / data.threshold_revenue) * 100)
-              : 0;
+            const pct = data?.threshold_revenue ? Math.round((data.total_sales / data.threshold_revenue) * 100) : 0
+            const clickable = data && ['RED', 'CRITICAL', 'YELLOW'].includes(data.risk_level)
 
             return (
               <div
                 key={code}
-                onClick={() => {
-                  if (data && ['RED', 'CRITICAL', 'YELLOW'].includes(data.risk_level)) {
-                    navigate('/alerts');
-                  }
-                }}
+                onClick={() => clickable && navigate('/alerts')}
                 onMouseEnter={() => setHoveredState(code)}
                 onMouseLeave={() => setHoveredState(null)}
+                className="relative rounded-lg py-2.5 px-1 text-center transition-transform"
                 style={{
-                  position: 'relative',
                   backgroundColor: bg,
-                  borderRadius: 8,
-                  padding: '10px 4px',
-                  textAlign: 'center',
-                  cursor: data && data.risk_level !== 'GREEN' ? 'pointer' : 'default',
-                  transition: 'transform 0.15s',
+                  cursor: clickable ? 'pointer' : 'default',
                   transform: hoveredState === code ? 'scale(1.1)' : 'scale(1)',
                   zIndex: hoveredState === code ? 10 : 1,
                 }}
               >
-                <div style={{ fontSize: 13, fontWeight: 700, color: textColor }}>{code}</div>
-                {/* Tooltip */}
+                <div className="text-[13px] font-bold" style={{ color: textColor }}>{code}</div>
                 {hoveredState === code && (
-                  <div style={{
-                    position: 'absolute', bottom: '100%', left: '50%', transform: 'translateX(-50%)',
-                    backgroundColor: '#1f2937', color: '#fff', padding: '8px 12px', borderRadius: 8,
-                    fontSize: 12, whiteSpace: 'nowrap', zIndex: 100, marginBottom: 6,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
-                  }}>
-                    <div style={{ fontWeight: 600 }}>{STATE_NAMES[code]}</div>
-                    {isNoTax ? (
-                      <div>No sales tax</div>
-                    ) : data ? (
+                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap z-10 shadow-xl">
+                    <div className="font-semibold">{STATE_NAMES[code]}</div>
+                    {isNoTax ? <div>No sales tax</div> : data ? (
                       <>
                         <div>Sales: {formatCurrency(data.total_sales)}</div>
                         <div>Threshold: {pct}%</div>
                         <div>Risk: {data.risk_level}</div>
                       </>
-                    ) : (
-                      <div>No sales data</div>
-                    )}
+                    ) : <div>No sales data</div>}
                   </div>
                 )}
               </div>
-            );
+            )
           })}
         </div>
 
-        {/* Legend */}
-        <div style={{ display: 'flex', gap: 16, marginTop: 16, flexWrap: 'wrap', fontSize: 12, color: '#6b7280' }}>
+        <div className="flex gap-4 mt-4 flex-wrap text-xs text-gray-500">
           {[
             { label: 'No Data', color: '#e5e7eb' },
             { label: 'No Sales Tax', color: '#dbeafe' },
-            { label: 'Green', color: '#22c55e' },
-            { label: 'Yellow', color: '#eab308' },
-            { label: 'Red', color: '#ef4444' },
-            { label: 'Critical', color: '#7c3aed' },
+            { label: 'Green', color: colors.risk.GREEN },
+            { label: 'Yellow', color: colors.risk.YELLOW },
+            { label: 'Red', color: colors.risk.RED },
+            { label: 'Critical', color: colors.risk.CRITICAL },
           ].map(item => (
-            <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-              <div style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: item.color }} />
+            <div key={item.label} className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded-[3px]" style={{ backgroundColor: item.color }} />
               {item.label}
             </div>
           ))}
@@ -203,73 +146,57 @@ export default function Dashboard() {
 
       {/* Risk table */}
       {sorted.length > 0 && (
-        <div style={{
-          backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
-          padding: 24, overflowX: 'auto',
-        }}>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: '#111827', marginBottom: 16 }}>
-            Risk Breakdown
-          </h2>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+        <div className="bg-white rounded-xl border border-gray-200 p-6 overflow-x-auto">
+          <h2 className="text-base font-semibold text-gray-900 mb-4">Risk Breakdown</h2>
+          <table className="w-full border-collapse text-sm">
             <thead>
-              <tr style={{ borderBottom: '2px solid #e5e7eb' }}>
+              <tr className="border-b-2 border-gray-200">
                 {['State', 'Total Sales', 'Threshold', '% Used', 'Risk Level', 'Action'].map(h => (
-                  <th key={h} style={{ textAlign: 'left', padding: '10px 12px', fontWeight: 600, color: '#6b7280', fontSize: 12, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                    {h}
-                  </th>
+                  <th key={h} className="text-left px-3 py-2.5 font-semibold text-gray-500 text-xs uppercase tracking-wide">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {sorted.map(s => {
-                const pct = s.threshold_revenue ? Math.round((s.total_sales / s.threshold_revenue) * 100) : 0;
+                const pct = s.threshold_revenue ? Math.round((s.total_sales / s.threshold_revenue) * 100) : 0
                 return (
-                  <tr key={s.state} style={{ borderBottom: '1px solid #f3f4f6' }}>
-                    <td style={{ padding: '10px 12px', fontWeight: 600 }}>
-                      {STATE_NAMES[s.state] || s.state}
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>{formatCurrency(s.total_sales)}</td>
-                    <td style={{ padding: '10px 12px' }}>{formatCurrency(s.threshold_revenue)}</td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <div style={{ flex: 1, height: 6, backgroundColor: '#f3f4f6', borderRadius: 3, maxWidth: 100 }}>
-                          <div style={{
-                            height: '100%', borderRadius: 3,
-                            backgroundColor: RISK_COLORS[s.risk_level] || '#22c55e',
-                            width: `${Math.min(pct, 100)}%`,
-                          }} />
+                  <tr key={s.state} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+                    <td className="px-3 py-2.5 font-semibold">{STATE_NAMES[s.state] || s.state}</td>
+                    <td className="px-3 py-2.5">{formatCurrency(s.total_sales)}</td>
+                    <td className="px-3 py-2.5">{formatCurrency(s.threshold_revenue)}</td>
+                    <td className="px-3 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-gray-100 rounded-full max-w-[100px]">
+                          <div
+                            className="h-full rounded-full"
+                            style={{ width: `${Math.min(pct, 100)}%`, backgroundColor: colors.risk[s.risk_level] || colors.risk.GREEN }}
+                          />
                         </div>
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>{pct}%</span>
+                        <span className="text-xs font-semibold">{pct}%</span>
                       </div>
                     </td>
-                    <td style={{ padding: '10px 12px' }}>
-                      <RiskBadge level={s.risk_level} />
-                    </td>
-                    <td style={{ padding: '10px 12px' }}>
+                    <td className="px-3 py-2.5"><RiskBadge level={s.risk_level} /></td>
+                    <td className="px-3 py-2.5">
                       {['RED', 'CRITICAL'].includes(s.risk_level) ? (
                         <button
                           onClick={() => navigate('/alerts')}
-                          style={{
-                            padding: '4px 14px', borderRadius: 6, border: 'none',
-                            backgroundColor: '#ef4444', color: '#fff', fontSize: 12,
-                            fontWeight: 600, cursor: 'pointer',
-                          }}
+                          className="px-3.5 py-1 rounded-md border-none bg-red-500 text-white text-xs font-semibold cursor-pointer hover:bg-red-600 transition-colors"
                         >
                           FIX
                         </button>
                       ) : s.risk_level === 'YELLOW' ? (
-                        <span style={{ fontSize: 12, color: '#eab308', fontWeight: 600 }}>Monitor</span>
+                        <span className="text-xs font-semibold text-yellow-500">Monitor</span>
                       ) : (
-                        <Check size={16} color="#22c55e" />
+                        <Check size={16} color={colors.risk.GREEN} />
                       )}
                     </td>
                   </tr>
-                );
+                )
               })}
             </tbody>
           </table>
         </div>
       )}
     </div>
-  );
+  )
 }

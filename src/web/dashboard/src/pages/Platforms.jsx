@@ -1,322 +1,204 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react'
 import {
   CreditCard, ShoppingBag, Palette, Wallet, Square as SquareIcon,
   Package, Plug, PlugZap, Upload, RefreshCw, X,
-} from 'lucide-react';
+} from 'lucide-react'
 import {
   getConnectedPlatforms, getSupportedPlatforms, syncAllPlatforms,
   connectStripe, connectShopify, connectEtsy, connectPayPal,
   connectSquare, uploadAmazonCSV, disconnectPlatform,
-} from '../api/client';
-import LoadingSpinner from '../components/LoadingSpinner';
+} from '../api/client'
+import { colors } from '../design/tokens'
+import LoadingSpinner from '../components/LoadingSpinner'
 
 const PLATFORM_ICONS = {
-  stripe: CreditCard,
-  shopify: ShoppingBag,
-  etsy: Palette,
-  paypal: Wallet,
-  square: SquareIcon,
-  amazon: Package,
-};
-
-const PLATFORM_COLORS = {
-  stripe: '#6d28d9',
-  shopify: '#16a34a',
-  etsy: '#ea580c',
-  paypal: '#2563eb',
-  square: '#0d9488',
-  amazon: '#ca8a04',
-};
+  stripe: CreditCard, shopify: ShoppingBag, etsy: Palette,
+  paypal: Wallet, square: SquareIcon, amazon: Package,
+}
 
 export default function Platforms({ showToast }) {
-  const [supported, setSupported] = useState([]);
-  const [connected, setConnected] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
-  const [connectForm, setConnectForm] = useState(null); // platform name
-  const [formData, setFormData] = useState({});
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [supported, setSupported] = useState([])
+  const [connected, setConnected] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [syncing, setSyncing] = useState(false)
+  const [connectForm, setConnectForm] = useState(null)
+  const [formData, setFormData] = useState({})
+  const [submitting, setSubmitting] = useState(false)
+  const [error, setError] = useState(null)
 
   const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+    setLoading(true); setError(null)
     try {
-      const [sup, con] = await Promise.all([
-        getSupportedPlatforms(),
-        getConnectedPlatforms(),
-      ]);
-      setSupported(sup || []);
-      setConnected(con || []);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      const [sup, con] = await Promise.all([getSupportedPlatforms(), getConnectedPlatforms()])
+      setSupported(sup || []); setConnected(con || [])
+    } catch (err) { setError(err.message) }
+    finally { setLoading(false) }
+  }, [])
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => { load() }, [load])
 
-  const connectedMap = {};
-  connected.forEach(c => { if (c.status !== 'disconnected') connectedMap[c.platform] = c; });
+  const connectedMap = {}
+  connected.forEach(c => { if (c.status !== 'disconnected') connectedMap[c.platform] = c })
 
   const handleSync = useCallback(async () => {
-    setSyncing(true);
-    try {
-      await syncAllPlatforms();
-      showToast?.('All platforms synced successfully', 'success');
-      load();
-    } catch (err) {
-      showToast?.(err.message, 'error');
-    } finally {
-      setSyncing(false);
-    }
-  }, [load, showToast]);
+    setSyncing(true)
+    try { await syncAllPlatforms(); showToast?.('All platforms synced successfully', 'success'); load() }
+    catch (err) { showToast?.(err.message, 'error') }
+    finally { setSyncing(false) }
+  }, [load, showToast])
 
   const handleDisconnect = useCallback(async (platform) => {
-    try {
-      await disconnectPlatform(null, platform);
-      showToast?.(`${platform} disconnected`, 'success');
-      load();
-    } catch (err) {
-      showToast?.(err.message, 'error');
-    }
-  }, [load, showToast]);
+    try { await disconnectPlatform(null, platform); showToast?.(`${platform} disconnected`, 'success'); load() }
+    catch (err) { showToast?.(err.message, 'error') }
+  }, [load, showToast])
 
   const handleConnect = useCallback(async (platform) => {
-    setSubmitting(true);
+    setSubmitting(true)
     try {
       switch (platform) {
-        case 'stripe':
-          await connectStripe(null, formData.api_key);
-          break;
-        case 'shopify':
-          await connectShopify(null, formData.shop_url, formData.code);
-          break;
-        case 'etsy':
-          await connectEtsy(null, formData.api_key, formData.access_token, formData.shop_id);
-          break;
-        case 'paypal':
-          await connectPayPal(null, formData.client_id, formData.client_secret);
-          break;
-        case 'square':
-          await connectSquare(null, formData.access_token);
-          break;
-        case 'amazon':
-          if (formData.file) {
-            await uploadAmazonCSV(null, formData.file);
-          }
-          break;
+        case 'stripe':  await connectStripe(null, formData.api_key); break
+        case 'shopify': await connectShopify(null, formData.shop_url, formData.code); break
+        case 'etsy':    await connectEtsy(null, formData.api_key, formData.access_token, formData.shop_id); break
+        case 'paypal':  await connectPayPal(null, formData.client_id, formData.client_secret); break
+        case 'square':  await connectSquare(null, formData.access_token); break
+        case 'amazon':  if (formData.file) await uploadAmazonCSV(null, formData.file); break
       }
-      showToast?.(`${platform} connected successfully`, 'success');
-      setConnectForm(null);
-      setFormData({});
-      load();
-    } catch (err) {
-      showToast?.(err.message, 'error');
-    } finally {
-      setSubmitting(false);
-    }
-  }, [formData, load, showToast]);
+      showToast?.(`${platform} connected successfully`, 'success')
+      setConnectForm(null); setFormData({}); load()
+    } catch (err) { showToast?.(err.message, 'error') }
+    finally { setSubmitting(false) }
+  }, [formData, load, showToast])
 
-  if (loading) return <LoadingSpinner />;
-  if (error) return <div style={{ padding: 40, color: '#991b1b' }}>Failed to load platforms: {error}</div>;
+  if (loading) return <LoadingSpinner />
+  if (error) return <div className="p-10 text-red-800">Failed to load platforms: {error}</div>
 
-  const inputStyle = {
-    width: '100%', padding: '8px 12px', borderRadius: 8,
-    border: '1px solid #d1d5db', fontSize: 14, boxSizing: 'border-box',
-  };
+  const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'
 
   const renderConnectForm = (platform) => {
     const forms = {
-      stripe: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input style={inputStyle} placeholder="Stripe Secret API Key (sk_...)" value={formData.api_key || ''}
-            onChange={e => setFormData(d => ({ ...d, api_key: e.target.value }))} />
-        </div>
-      ),
-      shopify: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input style={inputStyle} placeholder="Shop URL (mystore.myshopify.com)" value={formData.shop_url || ''}
-            onChange={e => setFormData(d => ({ ...d, shop_url: e.target.value }))} />
-          <input style={inputStyle} placeholder="OAuth Code" value={formData.code || ''}
-            onChange={e => setFormData(d => ({ ...d, code: e.target.value }))} />
-        </div>
-      ),
-      etsy: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input style={inputStyle} placeholder="API Key" value={formData.api_key || ''}
-            onChange={e => setFormData(d => ({ ...d, api_key: e.target.value }))} />
-          <input style={inputStyle} placeholder="Access Token" value={formData.access_token || ''}
-            onChange={e => setFormData(d => ({ ...d, access_token: e.target.value }))} />
-          <input style={inputStyle} placeholder="Shop ID" value={formData.shop_id || ''}
-            onChange={e => setFormData(d => ({ ...d, shop_id: e.target.value }))} />
-        </div>
-      ),
-      paypal: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input style={inputStyle} placeholder="Client ID" value={formData.client_id || ''}
-            onChange={e => setFormData(d => ({ ...d, client_id: e.target.value }))} />
-          <input style={inputStyle} placeholder="Client Secret" value={formData.client_secret || ''}
-            onChange={e => setFormData(d => ({ ...d, client_secret: e.target.value }))} type="password" />
-        </div>
-      ),
-      square: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <input style={inputStyle} placeholder="Access Token" value={formData.access_token || ''}
-            onChange={e => setFormData(d => ({ ...d, access_token: e.target.value }))} />
-        </div>
-      ),
-      amazon: (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <label style={{
-            padding: '12px 20px', border: '2px dashed #d1d5db', borderRadius: 8,
-            textAlign: 'center', cursor: 'pointer', fontSize: 14, color: '#6b7280',
-          }}>
-            {formData.file ? formData.file.name : 'Click to select CSV file'}
-            <input type="file" accept=".csv" style={{ display: 'none' }}
-              onChange={e => setFormData(d => ({ ...d, file: e.target.files[0] }))} />
-          </label>
-        </div>
-      ),
-    };
-    return forms[platform] || null;
-  };
+      stripe: <input className={inputCls} placeholder="Stripe Secret API Key (sk_...)" value={formData.api_key || ''}
+        onChange={e => setFormData(d => ({ ...d, api_key: e.target.value }))} />,
+      shopify: <>
+        <input className={inputCls} placeholder="Shop URL (mystore.myshopify.com)" value={formData.shop_url || ''}
+          onChange={e => setFormData(d => ({ ...d, shop_url: e.target.value }))} />
+        <input className={inputCls} placeholder="OAuth Code" value={formData.code || ''}
+          onChange={e => setFormData(d => ({ ...d, code: e.target.value }))} />
+      </>,
+      etsy: <>
+        <input className={inputCls} placeholder="API Key" value={formData.api_key || ''}
+          onChange={e => setFormData(d => ({ ...d, api_key: e.target.value }))} />
+        <input className={inputCls} placeholder="Access Token" value={formData.access_token || ''}
+          onChange={e => setFormData(d => ({ ...d, access_token: e.target.value }))} />
+        <input className={inputCls} placeholder="Shop ID" value={formData.shop_id || ''}
+          onChange={e => setFormData(d => ({ ...d, shop_id: e.target.value }))} />
+      </>,
+      paypal: <>
+        <input className={inputCls} placeholder="Client ID" value={formData.client_id || ''}
+          onChange={e => setFormData(d => ({ ...d, client_id: e.target.value }))} />
+        <input type="password" className={inputCls} placeholder="Client Secret" value={formData.client_secret || ''}
+          onChange={e => setFormData(d => ({ ...d, client_secret: e.target.value }))} />
+      </>,
+      square: <input className={inputCls} placeholder="Access Token" value={formData.access_token || ''}
+        onChange={e => setFormData(d => ({ ...d, access_token: e.target.value }))} />,
+      amazon: <label className="block border-2 border-dashed border-gray-300 rounded-lg px-5 py-3 text-center text-sm text-gray-500 cursor-pointer hover:border-primary transition-colors">
+        {formData.file ? formData.file.name : 'Click to select CSV file'}
+        <input type="file" accept=".csv" className="hidden"
+          onChange={e => setFormData(d => ({ ...d, file: e.target.files[0] }))} />
+      </label>,
+    }
+    return forms[platform] ? <div className="flex flex-col gap-2.5">{forms[platform]}</div> : null
+  }
 
   return (
     <div>
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, flexWrap: 'wrap', gap: 12 }}>
-        <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827' }}>Platforms</h1>
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <h1 className="text-2xl font-bold text-gray-900">Platforms</h1>
         <button
           onClick={handleSync}
           disabled={syncing}
-          style={{
-            padding: '8px 20px', borderRadius: 8, border: 'none',
-            backgroundColor: '#6366f1', color: '#fff', fontSize: 14,
-            fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 8,
-            opacity: syncing ? 0.7 : 1,
-          }}
+          className={`flex items-center gap-2 px-5 py-2 rounded-lg border-none bg-primary text-white text-sm font-semibold cursor-pointer hover:bg-indigo-600 transition-colors ${syncing ? 'opacity-70' : ''}`}
         >
-          <RefreshCw size={16} className={syncing ? 'spinning' : ''} />
+          <RefreshCw size={16} className={syncing ? 'animate-spin' : ''} />
           {syncing ? 'Syncing...' : 'Sync All Platforms'}
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: 16 }}>
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
         {supported.map(p => {
-          const Icon = PLATFORM_ICONS[p.platform] || Plug;
-          const color = PLATFORM_COLORS[p.platform] || '#6b7280';
-          const conn = connectedMap[p.platform];
-          const isConnected = !!conn;
-          const isFormOpen = connectForm === p.platform;
+          const Icon = PLATFORM_ICONS[p.platform] || Plug
+          const tok = colors.platform[p.platform] || { brand: '#6b7280', bg: '#f3f4f6', text: '#374151' }
+          const conn = connectedMap[p.platform]
+          const isConnected = !!conn
+          const isFormOpen = connectForm === p.platform
 
           return (
-            <div key={p.platform} style={{
-              backgroundColor: '#fff', borderRadius: 12, border: '1px solid #e5e7eb',
-              padding: 24, display: 'flex', flexDirection: 'column', gap: 16,
-            }}>
-              {/* Header */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: 10,
-                  backgroundColor: color + '15',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Icon size={22} color={color} />
+            <div key={p.platform} className="bg-white rounded-xl border border-gray-200 p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: tok.brand + '18' }}>
+                  <Icon size={22} color={tok.brand} />
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 600, fontSize: 16, color: '#111827' }}>
-                    {p.display_name}
-                  </div>
-                  <div style={{
-                    fontSize: 12, fontWeight: 600,
-                    color: isConnected ? '#16a34a' : '#9ca3af',
-                  }}>
+                <div className="flex-1">
+                  <div className="font-semibold text-base text-gray-900">{p.display_name}</div>
+                  <div className={`text-xs font-semibold ${isConnected ? 'text-green-600' : 'text-gray-400'}`}>
                     {isConnected ? 'Connected' : 'Not Connected'}
                   </div>
                 </div>
-                {isConnected && (
-                  <div style={{
-                    width: 10, height: 10, borderRadius: '50%',
-                    backgroundColor: '#22c55e',
-                  }} />
-                )}
+                {isConnected && <div className="w-2.5 h-2.5 rounded-full bg-green-500" />}
               </div>
 
-              {/* Connected info */}
               {isConnected && conn.last_sync_at && (
-                <div style={{ fontSize: 13, color: '#6b7280' }}>
+                <div className="text-[13px] text-gray-500">
                   Last sync: {new Date(conn.last_sync_at).toLocaleString()}
                 </div>
               )}
 
-              {/* Instructions */}
               {!isConnected && !isFormOpen && (
-                <div style={{ fontSize: 13, color: '#9ca3af', lineHeight: 1.5 }}>
-                  {p.instructions}
-                </div>
+                <div className="text-[13px] text-gray-400 leading-relaxed">{p.instructions}</div>
               )}
 
-              {/* Connect form */}
               {isFormOpen && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                <div className="flex flex-col gap-3">
                   {renderConnectForm(p.platform)}
-                  <div style={{ display: 'flex', gap: 8 }}>
+                  <div className="flex gap-2">
                     <button
                       onClick={() => handleConnect(p.platform)}
                       disabled={submitting}
-                      style={{
-                        flex: 1, padding: '8px 16px', borderRadius: 8, border: 'none',
-                        backgroundColor: color, color: '#fff', fontSize: 14,
-                        fontWeight: 600, cursor: 'pointer', opacity: submitting ? 0.7 : 1,
-                      }}
+                      className={`flex-1 py-2 rounded-lg border-none text-white text-sm font-semibold cursor-pointer transition-colors ${submitting ? 'opacity-70' : ''}`}
+                      style={{ backgroundColor: tok.brand }}
                     >
                       {submitting ? 'Connecting...' : 'Connect'}
                     </button>
                     <button
-                      onClick={() => { setConnectForm(null); setFormData({}); }}
-                      style={{
-                        padding: '8px 12px', borderRadius: 8, border: '1px solid #d1d5db',
-                        backgroundColor: '#fff', cursor: 'pointer',
-                      }}
+                      onClick={() => { setConnectForm(null); setFormData({}) }}
+                      className="px-3 py-2 rounded-lg border border-gray-300 bg-white cursor-pointer hover:bg-gray-50"
                     >
-                      <X size={16} color="#6b7280" />
+                      <X size={16} className="text-gray-500" />
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* Action button */}
               {!isFormOpen && (
-                isConnected ? (
-                  <button
-                    onClick={() => handleDisconnect(p.platform)}
-                    style={{
-                      padding: '8px 16px', borderRadius: 8, border: '1px solid #fecaca',
-                      backgroundColor: '#fff', color: '#ef4444', fontSize: 14,
-                      fontWeight: 500, cursor: 'pointer',
-                    }}
-                  >
-                    Disconnect
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => { setConnectForm(p.platform); setFormData({}); }}
-                    style={{
-                      padding: '8px 16px', borderRadius: 8, border: 'none',
-                      backgroundColor: color + '15', color: color, fontSize: 14,
-                      fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
-                    <PlugZap size={14} style={{ marginRight: 6, verticalAlign: 'middle' }} />
-                    Connect
-                  </button>
-                )
+                isConnected
+                  ? <button
+                      onClick={() => handleDisconnect(p.platform)}
+                      className="py-2 px-4 rounded-lg border border-red-200 bg-white text-red-500 text-sm font-medium cursor-pointer hover:bg-red-50 transition-colors"
+                    >
+                      Disconnect
+                    </button>
+                  : <button
+                      onClick={() => { setConnectForm(p.platform); setFormData({}) }}
+                      className="py-2 px-4 rounded-lg border-none text-sm font-semibold cursor-pointer transition-colors flex items-center gap-1.5"
+                      style={{ backgroundColor: tok.brand + '18', color: tok.brand }}
+                    >
+                      <PlugZap size={14} /> Connect
+                    </button>
               )}
             </div>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }
