@@ -5,17 +5,8 @@ import { getNexusStatus, getSummary, getAlerts } from '../api/client'
 import { colors } from '../design/tokens'
 import StatCard from '../components/StatCard'
 import RiskBadge from '../components/RiskBadge'
+import NexusMap from '../components/NexusMap'
 import { SkeletonStatCards, SkeletonTable } from '../components/Skeleton'
-
-const NO_SALES_TAX = ['MT', 'NH', 'OR', 'DE', 'AK']
-
-const ALL_STATES = [
-  'AL','AK','AZ','AR','CA','CO','CT','DE','FL','GA',
-  'HI','ID','IL','IN','IA','KS','KY','LA','ME','MD',
-  'MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ',
-  'NM','NY','NC','ND','OH','OK','OR','PA','RI','SC',
-  'SD','TN','TX','UT','VT','VA','WA','WV','WI','WY','DC',
-]
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -41,7 +32,6 @@ export default function Dashboard() {
   const [alertCount, setAlertCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [hoveredState, setHoveredState] = useState(null)
 
   const load = useCallback(async () => {
     setLoading(true); setError(null)
@@ -72,8 +62,6 @@ export default function Dashboard() {
   )
   if (error) return <div className="p-10 text-red-800">Failed to load dashboard: {error}</div>
 
-  const stateMap = {}
-  nexus.forEach(s => { stateMap[s.state] = s })
 
   const totalSales = nexus.reduce((sum, s) => sum + (s.total_sales || 0), 0)
   const statesAtRisk = nexus.filter(s => ['YELLOW', 'RED', 'CRITICAL'].includes(s.risk_level)).length
@@ -95,67 +83,10 @@ export default function Dashboard() {
         <StatCard icon={Bell} label="Open Alerts" value={alertCount} color={colors.risk.RED} />
       </div>
 
-      {/* State risk map */}
+      {/* Choropleth map */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
         <h2 className="text-base font-semibold text-gray-900 mb-4">State Risk Map</h2>
-        <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
-          {ALL_STATES.map(code => {
-            const data = stateMap[code]
-            const isNoTax = NO_SALES_TAX.includes(code)
-            let bg = '#e5e7eb', textColor = '#6b7280'
-            if (isNoTax) { bg = '#dbeafe'; textColor = '#1e40af' }
-            else if (data) { bg = colors.risk[data.risk_level] || '#e5e7eb'; textColor = '#fff'; if (data.risk_level === 'YELLOW') textColor = '#422006' }
-
-            const pct = data?.threshold_revenue ? Math.round((data.total_sales / data.threshold_revenue) * 100) : 0
-            const clickable = data && ['RED', 'CRITICAL', 'YELLOW'].includes(data.risk_level)
-
-            return (
-              <div
-                key={code}
-                onClick={() => clickable && navigate('/alerts')}
-                onMouseEnter={() => setHoveredState(code)}
-                onMouseLeave={() => setHoveredState(null)}
-                className="relative rounded-lg py-2.5 px-1 text-center transition-transform"
-                style={{
-                  backgroundColor: bg,
-                  cursor: clickable ? 'pointer' : 'default',
-                  transform: hoveredState === code ? 'scale(1.1)' : 'scale(1)',
-                  zIndex: hoveredState === code ? 10 : 1,
-                }}
-              >
-                <div className="text-[13px] font-bold" style={{ color: textColor }}>{code}</div>
-                {hoveredState === code && (
-                  <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 bg-gray-800 text-white px-3 py-2 rounded-lg text-xs whitespace-nowrap z-10 shadow-xl">
-                    <div className="font-semibold">{STATE_NAMES[code]}</div>
-                    {isNoTax ? <div>No sales tax</div> : data ? (
-                      <>
-                        <div>Sales: {formatCurrency(data.total_sales)}</div>
-                        <div>Threshold: {pct}%</div>
-                        <div>Risk: {data.risk_level}</div>
-                      </>
-                    ) : <div>No sales data</div>}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="flex gap-4 mt-4 flex-wrap text-xs text-gray-500">
-          {[
-            { label: 'No Data', color: '#e5e7eb' },
-            { label: 'No Sales Tax', color: '#dbeafe' },
-            { label: 'Green', color: colors.risk.GREEN },
-            { label: 'Yellow', color: colors.risk.YELLOW },
-            { label: 'Red', color: colors.risk.RED },
-            { label: 'Critical', color: colors.risk.CRITICAL },
-          ].map(item => (
-            <div key={item.label} className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded-[3px]" style={{ backgroundColor: item.color }} />
-              {item.label}
-            </div>
-          ))}
-        </div>
+        <NexusMap nexusData={nexus} onStateClick={() => navigate('/alerts')} />
       </div>
 
       {/* Risk table */}
