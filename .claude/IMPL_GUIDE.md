@@ -180,19 +180,9 @@ curl http://localhost:8000/health
 ---
 
 ### SESSION B2 — Automated tests
-**Model: HAIKU** (write stubs + fixtures) **+ SONNET** (review/fill logic)
+**Model: HAIKU** (full session — stubs, logic, and verification)
 
-**Haiku creates** `tests/test_nexus_engine.py` with these test cases (as stubs):
-- `test_green_below_75pct` — sales at 74% → risk GREEN
-- `test_yellow_at_75pct` — sales at 75% → risk YELLOW
-- `test_red_at_90pct` — sales at 90% → risk RED
-- `test_critical_at_100pct` — sales at 100% → risk CRITICAL
-- `test_tx_count_worse_than_revenue` — low $ but 201 transactions → CRITICAL by count
-- `test_no_tax_state_ignored` — Montana sales → not in results
-- `test_year_rollover` — last year's sales don't count toward this year
-- `test_escalation_no_dupe` — existing YELLOW alert → don't create second YELLOW
-
-**Haiku also creates** `tests/conftest.py` with an in-memory DuckDB fixture:
+**Haiku creates** `tests/conftest.py` with an in-memory DuckDB fixture:
 ```python
 import pytest
 from src.agent.db import ShieldDB
@@ -204,13 +194,26 @@ def db():
     db.close()
 ```
 
-**Sonnet fills in** the actual test logic after stubs are written.
+**Haiku creates and fully implements** `tests/test_nexus_engine.py`:
 
-**Verify before commit:**
+| Test name | Setup | Assert |
+|---|---|---|
+| `test_green_below_75pct` | Insert TX sales at 74% of $100k threshold | risk == GREEN |
+| `test_yellow_at_75pct` | Insert TX sales at exactly 75% | risk == YELLOW |
+| `test_red_at_90pct` | Insert TX sales at 90% | risk == RED |
+| `test_critical_at_100pct` | Insert TX sales at 100% | risk == CRITICAL |
+| `test_tx_count_worse_than_revenue` | Insert 201 TX transactions, low $ | risk == CRITICAL (count wins) |
+| `test_no_tax_state_ignored` | Insert MT (Montana) sales | state not in results |
+| `test_year_rollover` | Insert last year's sales only | no states at risk this year |
+| `test_escalation_no_dupe` | Create YELLOW alert, run check again at same % | still only 1 open alert |
+
+**Haiku also runs the suite and reports results:**
 ```bash
+pip install pytest -q
 pytest tests/ -v
-# All 8 tests green
 ```
+If any test fails, Haiku fixes it before reporting done.
+
 **Commit message:** `test: nexus threshold + escalation boundary tests`
 
 ---
@@ -307,7 +310,7 @@ Template: header, merchant ID, date range, table of all audit actions, footer wi
 | JWT/auth security code | **Sonnet** |
 | One-line config fixes | **Haiku** |
 | Find/replace across files (exact pattern given) | **Haiku** |
-| Writing test stubs from a spec | **Haiku** |
+| Writing tests (stubs + logic + running them) | **Haiku** |
 | Boilerplate from a template | **Haiku** |
 | Adding a package + env var hookup | **Haiku** |
 | Git operations | **Haiku** |
