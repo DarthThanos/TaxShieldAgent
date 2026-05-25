@@ -5,7 +5,7 @@ import { getNexusStatus, getSummary, getAlerts } from '../api/client'
 import { colors } from '../design/tokens'
 import StatCard from '../components/StatCard'
 import RiskBadge from '../components/RiskBadge'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { SkeletonStatCards, SkeletonTable } from '../components/Skeleton'
 
 const NO_SALES_TAX = ['MT', 'NH', 'OR', 'DE', 'AK']
 
@@ -55,7 +55,21 @@ export default function Dashboard() {
 
   useEffect(() => { load() }, [load])
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return (
+    <div>
+      <div className="h-8 bg-gray-200 animate-pulse rounded w-40 mb-6" />
+      <SkeletonStatCards />
+      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+        <div className="h-5 bg-gray-200 animate-pulse rounded w-28 mb-4" />
+        <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(56px, 1fr))' }}>
+          {Array.from({ length: 51 }).map((_, i) => (
+            <div key={i} className="h-10 bg-gray-100 animate-pulse rounded-lg" />
+          ))}
+        </div>
+      </div>
+      <SkeletonTable rows={6} cols={6} />
+    </div>
+  )
   if (error) return <div className="p-10 text-red-800">Failed to load dashboard: {error}</div>
 
   const stateMap = {}

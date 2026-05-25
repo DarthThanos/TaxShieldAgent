@@ -4,7 +4,7 @@ import { getAlerts, getAlert, confirmFix, snoozeAlert } from '../api/client'
 import { colors } from '../design/tokens'
 import RiskBadge from '../components/RiskBadge'
 import ConfirmModal from '../components/ConfirmModal'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { SkeletonAlerts } from '../components/Skeleton'
 
 const STATE_NAMES = {
   AL:'Alabama',AK:'Alaska',AZ:'Arizona',AR:'Arkansas',CA:'California',
@@ -85,7 +85,12 @@ export default function Alerts({ showToast }) {
     }
   }, [showToast])
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return (
+    <div>
+      <div className="h-7 bg-gray-200 animate-pulse rounded w-28 mb-6" />
+      <SkeletonAlerts count={4} />
+    </div>
+  )
   if (error) return <div className="p-10 text-red-800">Failed to load alerts: {error}</div>
 
   if (alerts.length === 0) {

@@ -9,7 +9,7 @@ import {
   connectSquare, uploadAmazonCSV, disconnectPlatform,
 } from '../api/client'
 import { colors } from '../design/tokens'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { SkeletonBlock } from '../components/Skeleton'
 
 const PLATFORM_ICONS = {
   stripe: CreditCard, shopify: ShoppingBag, etsy: Palette,
@@ -69,7 +69,25 @@ export default function Platforms({ showToast }) {
     finally { setSubmitting(false) }
   }, [formData, load, showToast])
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return (
+    <div>
+      <div className="h-7 bg-gray-200 animate-pulse rounded w-28 mb-6" />
+      <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))' }}>
+        {[1,2,3,4,5,6].map(i => (
+          <div key={i} className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <SkeletonBlock className="w-11 h-11 rounded-xl" />
+              <div className="flex-1">
+                <SkeletonBlock className="h-4 w-24 mb-1.5" />
+                <SkeletonBlock className="h-3 w-16" />
+              </div>
+            </div>
+            <SkeletonBlock className="h-9 w-full rounded-lg" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
   if (error) return <div className="p-10 text-red-800">Failed to load platforms: {error}</div>
 
   const inputCls = 'w-full px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30'

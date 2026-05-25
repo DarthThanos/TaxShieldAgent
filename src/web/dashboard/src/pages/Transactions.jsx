@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from 'react'
 import { Plug } from 'lucide-react'
 import { getTransactions } from '../api/client'
 import PlatformBadge from '../components/PlatformBadge'
-import LoadingSpinner from '../components/LoadingSpinner'
+import { SkeletonTable } from '../components/Skeleton'
 
 function formatCurrency(val) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val || 0)
@@ -37,7 +37,12 @@ export default function Transactions() {
     (filterState === 'all' || t.state === filterState)
   ), [transactions, filterPlatform, filterState])
 
-  if (loading) return <LoadingSpinner />
+  if (loading) return (
+    <div>
+      <div className="h-7 bg-gray-200 animate-pulse rounded w-36 mb-6" />
+      <SkeletonTable rows={8} cols={5} />
+    </div>
+  )
   if (error) return <div className="p-10 text-red-800">Failed to load transactions: {error}</div>
 
   if (transactions.length === 0) {

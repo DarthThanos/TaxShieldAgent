@@ -11,6 +11,7 @@ import Alerts from './pages/Alerts'
 import Platforms from './pages/Platforms'
 import Transactions from './pages/Transactions'
 import Audit from './pages/Audit'
+import Onboarding from './pages/Onboarding'
 
 const MERCHANT_ID = import.meta.env.VITE_DEV_MERCHANT_ID || 'platform'
 
@@ -170,7 +171,10 @@ function AppContent() {
 export default function App() {
   return (
     <BrowserRouter>
-      <AppContent />
+      <Routes>
+        <Route path="/onboarding" element={<Onboarding />} />
+        <Route path="/*" element={<AppContent />} />
+      </Routes>
     </BrowserRouter>
   )
 }
