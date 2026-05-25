@@ -60,6 +60,18 @@ async def summary(
         engine.db.close()
 
 
+@router.get("/projections")
+async def projections(
+    merchant_id: str = Depends(get_merchant_id),
+    db: ShieldDB = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Return velocity-based nexus crossing date projections for at-risk states."""
+    try:
+        return db.get_all_nexus_projections(merchant_id)
+    finally:
+        db.close()
+
+
 @router.get("/transactions")
 async def transactions(
     merchant_id: str = Depends(get_merchant_id),

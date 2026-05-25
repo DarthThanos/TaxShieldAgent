@@ -48,6 +48,10 @@ export function getTransactions(merchantId) {
   return request('/dashboard/transactions');
 }
 
+export function getProjections() {
+  return request('/dashboard/projections');
+}
+
 // Alerts
 export function getAlerts(merchantId) {
   return request('/alerts');

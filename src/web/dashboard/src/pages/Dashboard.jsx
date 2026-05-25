@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { DollarSign, MapPin, AlertTriangle, Bell, Check } from 'lucide-react'
-import { getNexusStatus, getSummary, getAlerts } from '../api/client'
+import { DollarSign, MapPin, AlertTriangle, Bell, Check, TrendingUp, Calendar } from 'lucide-react'
+import { getNexusStatus, getSummary, getAlerts, getProjections } from '../api/client'
 import { colors } from '../design/tokens'
 import StatCard from '../components/StatCard'
 import RiskBadge from '../components/RiskBadge'
@@ -29,6 +29,7 @@ function formatCurrency(val) {
 export default function Dashboard() {
   const navigate = useNavigate()
   const [nexus, setNexus] = useState([])
+  const [projections, setProjections] = useState([])
   const [alertCount, setAlertCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
@@ -36,9 +37,12 @@ export default function Dashboard() {
   const load = useCallback(async () => {
     setLoading(true); setError(null)
     try {
-      const [nexusData, , alertsData] = await Promise.all([getNexusStatus(), getSummary(), getAlerts()])
+      const [nexusData, , alertsData, projData] = await Promise.all([
+        getNexusStatus(), getSummary(), getAlerts(), getProjections().catch(() => []),
+      ])
       setNexus(nexusData || [])
       setAlertCount((alertsData || []).length)
+      setProjections(projData || [])
     } catch (err) { setError(err.message) }
     finally { setLoading(false) }
   }, [])
@@ -82,6 +86,46 @@ export default function Dashboard() {
         <StatCard icon={AlertTriangle} label="States at Risk" value={statesAtRisk} color="#f59e0b" />
         <StatCard icon={Bell} label="Open Alerts" value={alertCount} color={colors.risk.RED} />
       </div>
+
+      {/* Velocity projections */}
+      {projections.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
+          <div className="flex items-center gap-2 mb-4">
+            <TrendingUp size={18} color={colors.primary} />
+            <h2 className="text-base font-semibold text-gray-900">Nexus Crossing Projections</h2>
+            <span className="text-xs text-gray-400 ml-1">at current 30-day run rate</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {projections.map(p => (
+              <div key={p.state} className="flex items-center gap-4 p-3 bg-gray-50 rounded-lg flex-wrap">
+                <div className="font-semibold text-gray-700 w-8 text-sm">{p.state}</div>
+                <div className="flex-1 min-w-[120px]">
+                  <div className="h-1.5 bg-gray-200 rounded-full">
+                    <div
+                      className="h-full rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(p.pct_of_threshold, 100)}%`,
+                        backgroundColor: colors.risk[p.risk_level] || colors.risk.YELLOW,
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="text-xs text-gray-500 w-12 text-right">{p.pct_of_threshold}%</div>
+                {p.projected_nexus_date ? (
+                  <div className="flex items-center gap-1 text-xs font-semibold text-amber-600">
+                    <Calendar size={12} />
+                    Crosses ~{new Date(p.projected_nexus_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    <span className="text-gray-400 font-normal ml-1">({p.days_to_nexus}d)</span>
+                  </div>
+                ) : (
+                  <div className="text-xs font-semibold text-red-600">Threshold exceeded</div>
+                )}
+                <div className="text-xs text-gray-400">${p.daily_rate.toLocaleString()}/day</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Choropleth map */}
       <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">

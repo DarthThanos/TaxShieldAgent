@@ -227,6 +227,91 @@ class ShieldDB:
 
         return statuses
 
+    # -- Velocity / projections -------------------------------------------
+
+    def get_nexus_velocity(self, merchant_id: str, state: str, days: int = 30) -> dict:
+        """Compute 30-day rolling sales velocity for a state and project nexus date.
+
+        Returns:
+            daily_rate: average $ per day over the last `days` days
+            days_to_nexus: estimated days until threshold is crossed (None if already crossed or no velocity)
+            projected_nexus_date: ISO date string, or None
+        """
+        year = datetime.now(timezone.utc).year
+        result = self.conn.execute(
+            """
+            SELECT
+                SUM(amount) AS total_sales,
+                COUNT(*)    AS tx_count
+            FROM transactions
+            WHERE merchant_id = ?
+              AND state = ?
+              AND EXTRACT(YEAR FROM created_at) = ?
+            """,
+            [merchant_id, state.upper(), year],
+        ).fetchone()
+
+        ytd_sales = float(result[0] or 0)
+
+        from .nexus_data import NEXUS_THRESHOLDS
+        threshold_info = NEXUS_THRESHOLDS.get(state.upper())
+        if threshold_info is None or not threshold_info.has_sales_tax:
+            return {"daily_rate": 0.0, "days_to_nexus": None, "projected_nexus_date": None}
+
+        threshold = float(threshold_info.revenue_threshold)
+        if threshold <= 0 or threshold == float("inf"):
+            return {"daily_rate": 0.0, "days_to_nexus": None, "projected_nexus_date": None}
+
+        # Rolling 30-day sales
+        rolling = self.conn.execute(
+            """
+            SELECT SUM(amount) AS rolling_sales
+            FROM transactions
+            WHERE merchant_id = ?
+              AND state = ?
+              AND created_at >= NOW() - INTERVAL (?) DAY
+            """,
+            [merchant_id, state.upper(), days],
+        ).fetchone()
+        rolling_sales = float(rolling[0] or 0)
+        daily_rate = rolling_sales / days if days > 0 else 0.0
+
+        if ytd_sales >= threshold:
+            return {"daily_rate": round(daily_rate, 2), "days_to_nexus": 0, "projected_nexus_date": None}
+
+        if daily_rate <= 0:
+            return {"daily_rate": 0.0, "days_to_nexus": None, "projected_nexus_date": None}
+
+        remaining = threshold - ytd_sales
+        days_to_nexus = int(remaining / daily_rate)
+        from datetime import timedelta
+        projected = datetime.now(timezone.utc).date() + timedelta(days=days_to_nexus)
+        return {
+            "daily_rate": round(daily_rate, 2),
+            "days_to_nexus": days_to_nexus,
+            "projected_nexus_date": projected.isoformat(),
+        }
+
+    def get_all_nexus_projections(self, merchant_id: str) -> list[dict]:
+        """Return velocity projections for all states with active sales this year."""
+        statuses = self.get_nexus_status(merchant_id)
+        projections = []
+        for s in statuses:
+            if s["risk_level"] == "GREEN" and s["pct_of_threshold"] < 50:
+                continue  # skip very low-risk states to keep response lean
+            vel = self.get_nexus_velocity(merchant_id, s["state"])
+            if vel["projected_nexus_date"] or vel["days_to_nexus"] == 0:
+                projections.append({
+                    "state": s["state"],
+                    "risk_level": s["risk_level"],
+                    "pct_of_threshold": s["pct_of_threshold"],
+                    "total_sales": s["total_sales"],
+                    "threshold_revenue": s["threshold_revenue"],
+                    **vel,
+                })
+        projections.sort(key=lambda x: x.get("days_to_nexus") or 99999)
+        return projections
+
     # -- Platform connections -----------------------------------------------
 
     def add_platform_connection(
