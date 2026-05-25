@@ -94,18 +94,18 @@ graceful degraded states. Goal: merchant sees their real first state number in <
 
 ## PHASE D — Differentiation (top-of-class) ⭐
 
-### D1. US nexus choropleth map ⬜
+### D1. US nexus choropleth map ✅
 States colored green/yellow/red by risk; hover shows the projection. The hero screenshot for the
 Marketplace listing + Product Hunt.
 
-### D2. Forward-looking projection ⬜
+### D2. Forward-looking projection ✅
 Not just "you're at $94k" — "at your current 30-day run rate you'll cross Texas nexus ~July 18."
 Compute velocity from existing transaction timestamps. Competitors don't have this.
 
-### D3. Exposure estimate ⬜
+### D3. Exposure estimate ✅
 When a state goes RED, show estimated back-tax exposure. This is the number that drives the FIX click.
 
-### D4. Compliance receipts (audit log as a feature) ⬜
+### D4. Compliance receipts (audit log as a feature) ✅
 Exportable PDF "compliance receipts" for accountants/auditors. Audit log is already immutable —
 package it as peace-of-mind.
 
