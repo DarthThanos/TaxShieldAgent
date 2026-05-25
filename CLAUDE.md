@@ -5,9 +5,10 @@ thresholds across all 50 states and automates sales-tax registration.
 
 ## ⭐ ACTIVE ROADMAP — READ FIRST
 
-The public-readiness engineering plan lives at **`.claude/PHASE_PLAN.md`**.
-Read it at the start of any work session. It is the source of truth for what to build and
-in what order. Keep its status markers (⬜/🟡/✅) current as work progresses.
+Two files govern all work:
+- **`.claude/PHASE_PLAN.md`** — the WHAT and WHY. Status tracker (⬜/🟡/✅). Keep current.
+- **`.claude/IMPL_GUIDE.md`** — the HOW. Session-by-session steps, exact files, model assignments
+  (Haiku vs Sonnet), verify commands, and commit messages. Start here when building.
 
 **Phases A and B are launch blockers** — the app is NOT safe for more than one real user until
 they are done (DB concurrency, multi-tenant agent loop, JWT verification, CORS).
