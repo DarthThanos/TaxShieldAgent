@@ -6,6 +6,22 @@
 
 ---
 
+## Request Access
+
+This product is in **private early access** — currently onboarding Stripe merchants by invitation only.
+
+To request a demo or early access, email:
+
+**diongross@gmail.com** — Subject: `TaxShieldAgent Access Request`
+
+Include your name, your Stripe merchant volume (approximate), and the states you sell into. Reviewed personally.
+
+> Stripe billing integration is in active development. Early access users lock in founding-member pricing.
+
+---
+
+---
+
 ## What This Is
 
 After the 2018 Supreme Court ruling in *South Dakota v. Wayfair*, every US state can require online sellers to collect and remit sales tax — even if the seller has never set foot in that state. The trigger is called **Economic Nexus**: typically **$100,000 in sales** or **200 transactions** per state, per year.
