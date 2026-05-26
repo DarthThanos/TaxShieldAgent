@@ -233,7 +233,7 @@ Active development phase: **Phase 1 — Core Engine**
 
 ## License
 
-MIT — See LICENSE file.
+Copyright (c) 2026 Dion Gross. All Rights Reserved. Proprietary and Confidential.
 
 ---
 
