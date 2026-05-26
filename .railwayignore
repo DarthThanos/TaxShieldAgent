@@ -8,3 +8,7 @@ __pycache__/
 .git/
 node_modules/
 stripe_app/node_modules/
+package.json
+package-lock.json
+tsconfig.json
+stripe-app.json
