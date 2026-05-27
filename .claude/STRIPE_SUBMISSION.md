@@ -1,5 +1,34 @@
 # Stripe Marketplace Submission — TaxShieldAgent
 
+## ⚠️ CURRENT STATUS — READ THIS FIRST (as of 2026-05-27)
+
+**BLOCKED — waiting on Stripe support response.**
+
+### What happened:
+1. `stripe apps set distribution public` — SUCCEEDED
+2. `stripe apps upload` — FAILED with: *"Connect platform cannot choose public distribution"*
+3. The account `acct_1TLIcLCIG7RXIpX1` is flagged as a Connect platform internally at Stripe
+4. This flag blocks public Marketplace uploads regardless of what permissions the app has
+5. A follow-up email was drafted and placed in Gmail drafts (diongross@gmail.com) — **Dion needs to send it if not already sent**
+
+### What was already fixed (v0.5.0 — committed and pushed):
+- `charge_write` permission removed from `stripe-app.json`
+- All Connect OAuth code removed from `stripe_connect.py`
+- `$1 per-registration` fee removed; monetisation is now subscription-only
+- Version bumped to 0.5.0
+
+### What to do when Stripe responds:
+1. If they lift the restriction: run `stripe apps upload` from `D:\ALL_Hive\Opus_Lab\Prompts\Builds\TaxShieldAgent`
+2. Go to `dashboard.stripe.com/acct_1TLIcLCIG7RXIpX1/apps/created/com.taxshieldagent.app` → Settings tab
+3. The full listing form will now appear — fill it in using the **Marketplace Listing** section below
+4. Submit for review
+
+### What the dashboard shows right now:
+- Settings tab → Distribution: Private (listing fields are hidden — this is expected while blocked)
+- Versions tab → Version 0.4.2, Test mode only (v0.5.0 upload was blocked)
+
+---
+
 ## Critical Context for Any AI Reading This
 
 **As of 2026-05-27 the Connect dependency has been removed.**
