@@ -7,12 +7,38 @@ Versioning follows [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ---
 
-## [Unreleased]
+## [0.5.0] — 2026-05-27
 
-### Planned
+### Removed — Connect Dependency (Marketplace Compliance Refactor)
+
+**Why:** Stripe does not allow Connect platform accounts to publish to the public
+Marketplace. The $1 per-registration fee was the sole reason Connect was required.
+Removing it unblocks Marketplace submission from the original account with no
+second account needed. Monetisation moves to a clean subscription model.
+
+**What changed:**
+- `stripe-app.json` — removed `charge_write` permission, bumped version to 0.5.0
+- `remediator.py` — removed `charge_fix_fee()` and `platform_account_id`; tax
+  registration logic unchanged
+- `stripe_connect.py` — removed Connect OAuth functions (`generate_connect_oauth_url`,
+  `exchange_oauth_code`, `get_account_details`); subscription billing retained
+- `subscriptions.py` routes — removed `$1.00 per state registration` fix_fee from
+  plan listing; replaced with `included in plan`
+- `.env.example` — removed `STRIPE_PLATFORM_KEY`, `STRIPE_CONNECT_CLIENT_ID`,
+  `STRIPE_REDIRECT_URI` (Connect-only vars)
+- `stripe_app_auth.py` — renamed source label from `stripe_connect_header` to
+  `stripe_app_header`
+
+**What did NOT change:**
+- All nexus monitoring, alerting, and detection logic — untouched
+- Tax registration via `stripe.tax.Registration.create` — untouched
+- Subscription billing (Pro/Agency) — untouched
+- All connectors (Shopify, PayPal, Square, Etsy, Amazon) — untouched
+- Audit log and PDF export — untouched
+
+### Unreleased / Planned
 - Email/SMS alert notifications (SendGrid/Resend)
 - Amazon SP-API native connector (replace CSV import)
-- Production backend deployment to `https://api.taxshieldagent.com` (Railway)
 
 ---
 

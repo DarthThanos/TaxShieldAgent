@@ -99,12 +99,12 @@ async def get_stripe_app_context(
                     "source": "stripe_app_jwt",
                 }
 
-    # 2. Fall back to X-Stripe-Account header
+    # 2. Fall back to X-Stripe-Account header (Stripe App passes this on some requests)
     if x_stripe_account and x_stripe_account.strip():
         return {
             "account_id": x_stripe_account.strip(),
             "user_id": None,
-            "source": "stripe_connect_header",
+            "source": "stripe_app_header",
         }
 
     return None

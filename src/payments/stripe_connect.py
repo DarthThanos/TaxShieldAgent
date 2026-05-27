@@ -1,13 +1,12 @@
 """
-Stripe Connect platform logic for TaxShieldAgent.
+Subscription billing for TaxShieldAgent.
 
-Handles OAuth onboarding, subscription management, and account
-retrieval for connected Stripe accounts.
+Handles Pro and Agency plan subscriptions via Stripe Checkout.
+No Connect, no OAuth, no application fees — pure subscription billing.
+Merchants subscribe directly; the app is a Stripe Marketplace extension.
 
-PLACEHOLDER MODULE: All functions are fully structured and documented
-but require real Stripe Product/Price IDs before production use.
-Set the STRIPE_*_PRICE_ID environment variables after creating the
-corresponding products in your Stripe Dashboard.
+Requires STRIPE_PRO_PRICE_ID and STRIPE_AGENCY_PRICE_ID env vars.
+Create these products in your Stripe Dashboard before going live.
 """
 
 from __future__ import annotations
@@ -20,12 +19,9 @@ import stripe
 
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Price IDs — read at call-time so .env changes take effect without restart
-# ---------------------------------------------------------------------------
 
 def _get_price_map() -> dict[str, dict[str, str]]:
-    """Read Price IDs from env at call-time (not module load time)."""
+    """Read Price IDs from env at call-time so .env changes take effect without restart."""
     return {
         "pro": {
             "monthly": os.getenv("STRIPE_PRO_PRICE_ID", ""),
@@ -36,57 +32,6 @@ def _get_price_map() -> dict[str, dict[str, str]]:
             "annual": os.getenv("STRIPE_AGENCY_ANNUAL_PRICE_ID", ""),
         },
     }
-
-
-# OAuth
-STRIPE_CLIENT_ID = os.getenv("STRIPE_CONNECT_CLIENT_ID", os.getenv("STRIPE_CLIENT_ID", ""))
-STRIPE_CONNECT_REDIRECT_URI = os.getenv(
-    "STRIPE_REDIRECT_URI", os.getenv("STRIPE_CONNECT_REDIRECT_URI", "http://localhost:8001/stripe-app/stripe-app-callback")
-)
-
-
-def generate_connect_oauth_url(state_token: str) -> str:
-    """Build a Stripe Connect Standard OAuth URL for merchant onboarding.
-
-    ``state_token`` is an opaque CSRF token that will be echoed back
-    in the redirect to verify the request originated from your app.
-
-    Returns the fully-formed authorization URL.
-    """
-    client_id = os.getenv("STRIPE_CONNECT_CLIENT_ID", os.getenv("STRIPE_CLIENT_ID", ""))
-    redirect_uri = os.getenv(
-        "STRIPE_REDIRECT_URI",
-        os.getenv("STRIPE_CONNECT_REDIRECT_URI", "http://localhost:8001/stripe-app/stripe-app-callback"),
-    )
-    base = "https://connect.stripe.com/oauth/authorize"
-    params = (
-        f"response_type=code"
-        f"&client_id={client_id}"
-        f"&scope=read_write"
-        f"&redirect_uri={redirect_uri}"
-        f"&state={state_token}"
-    )
-    url = f"{base}?{params}"
-    logger.info("Generated Connect OAuth URL (state_token=%s)", state_token)
-    return url
-
-
-def exchange_oauth_code(code: str) -> dict[str, Any]:
-    """Exchange an OAuth authorization code for connected-account credentials.
-
-    Calls ``stripe.OAuth.token()`` and returns a dict with:
-    ``stripe_user_id``, ``access_token``, ``refresh_token``.
-
-    Raises on any Stripe error.
-    """
-    response = stripe.OAuth.token(grant_type="authorization_code", code=code)
-    result: dict[str, Any] = {
-        "stripe_user_id": response["stripe_user_id"],
-        "access_token": response["access_token"],
-        "refresh_token": response.get("refresh_token", ""),
-    }
-    logger.info("OAuth code exchanged for account %s", result["stripe_user_id"])
-    return result
 
 
 def create_subscription(
@@ -120,6 +65,7 @@ def create_subscription(
     subscription = stripe.Subscription.create(
         customer=stripe_account_id,
         items=[{"price": price_id}],
+        # No application_fee_percent — subscription billing, not Connect platform fees
     )
 
     logger.info(
@@ -145,11 +91,3 @@ def cancel_subscription(subscription_id: str) -> bool:
     return True
 
 
-def get_account_details(stripe_account_id: str) -> dict[str, Any]:
-    """Retrieve details for a connected Stripe account.
-
-    Returns the Account object as a dict.
-    """
-    account = stripe.Account.retrieve(stripe_account_id)
-    logger.info("Retrieved account details for %s", stripe_account_id)
-    return dict(account)

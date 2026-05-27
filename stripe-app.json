@@ -2,7 +2,7 @@
   "$schema": "https://stripe.com/stripe-app.schema.json",
   "id": "com.taxshieldagent.monitor",
   "name": "TaxShieldAgent",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "icon": "./icon.png",
   "ui_extension": {
     "views": [
@@ -32,10 +32,6 @@
     {
       "permission": "tax_settings_write",
       "purpose": "Create Stripe Tax Registrations in US states when a merchant approves a compliance fix. Registration only occurs after explicit merchant confirmation — the app never acts autonomously."
-    },
-    {
-      "permission": "charge_write",
-      "purpose": "Apply a $1 application fee to the merchant's most recent charge when a state tax registration is successfully completed. This is the app's per-action monetisation fee."
     }
   ],
   "post_install_action": {

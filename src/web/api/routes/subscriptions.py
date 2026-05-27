@@ -171,7 +171,7 @@ async def list_plans() -> list[dict[str, Any]]:
             "ai_explanations": False,
             "audit_export": False,
             "multi_merchant": False,
-            "fix_fee": "$1.00 per state registration",
+            "fix_fee": "included in plan",
         },
         {
             "tier": "pro",
@@ -183,7 +183,7 @@ async def list_plans() -> list[dict[str, Any]]:
             "ai_explanations": True,
             "audit_export": True,
             "multi_merchant": False,
-            "fix_fee": "$1.00 per state registration",
+            "fix_fee": "included in plan",
         },
         {
             "tier": "agency",
@@ -195,6 +195,6 @@ async def list_plans() -> list[dict[str, Any]]:
             "ai_explanations": True,
             "audit_export": True,
             "multi_merchant": True,
-            "fix_fee": "$1.00 per state registration",
+            "fix_fee": "included in plan",
         },
     ]
